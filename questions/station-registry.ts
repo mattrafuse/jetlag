@@ -1,5 +1,5 @@
 import * as turf from "@turf/turf";
-import L from "leaflet";
+import type L from "leaflet";
 import { QUARTER_MILE } from "../constants";
 import type { RegisteredStation } from "./types";
 

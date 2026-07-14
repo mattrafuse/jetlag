@@ -4,21 +4,28 @@
 
 import { Stack } from "@mui/material";
 import { createRoot } from "react-dom/client";
-import { SidebarPanel } from "./questions/SidebarPanel";
-import { SettingsPanel } from "./SettingsPanel";
+import { SidebarPanel, TogglePanelButton } from "./questions/SidebarPanel";
+import { LocateButton, SettingsPanel, ToggleSettingsButton } from "./SettingsPanel";
 
 let root: ReturnType<typeof createRoot> | null = null;
 
-export function initOverlay(): void {
-  const container = document.createElement("div");
-  container.id = "app-overlay";
-  document.body.append(container);
+export const initOverlay = (): void => {
+  const container = document.getElementById("app-overlay")!;
 
   root = createRoot(container);
+
   root.render(
-    <Stack spacing={1}>
+    <Stack spacing={1} direction="row" sx={{ height: "100%" }}>
+      <Stack spacing={1} sx={{ p: 1 }}>
+        <TogglePanelButton />
+
+        <ToggleSettingsButton />
+
+        <LocateButton />
+      </Stack>
+
       <SettingsPanel />
       <SidebarPanel />
     </Stack>,
   );
-}
+};

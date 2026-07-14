@@ -22,11 +22,11 @@ const OUTER_BOUNDS: [number, number][] = [
  * - "no" (hider NOT within range): Everything INSIDE the circle is excluded.
  *   Returns the circle itself as the exclusion zone.
  */
-export function computeRadarExclusion(
+export const computeRadarExclusion = (
   center: [number, number], // [lat, lng]
   distanceMiles: number,
   answer: "yes" | "no",
-): GeoJSON.Feature<GeoJSON.Polygon> {
+): GeoJSON.Feature<GeoJSON.Polygon> => {
   const centerPoint = turf.point([center[1], center[0]]); // [lng, lat]
   const radiusKm = distanceMiles * MILES_TO_KM;
   const circle = turf.circle(centerPoint, radiusKm, { units: "kilometers", steps: 64 });
@@ -51,11 +51,11 @@ export function computeRadarExclusion(
  * - "hotter" (end is closer to hider): Exclude the half-plane containing the START point.
  * - "colder" (end is farther from hider): Exclude the half-plane containing the END point.
  */
-export function computeThermometerExclusion(
+export const computeThermometerExclusion = (
   start: [number, number], // [lat, lng]
   end: [number, number], // [lat, lng]
   answer: "hotter" | "colder",
-): GeoJSON.Feature<GeoJSON.Polygon> {
+): GeoJSON.Feature<GeoJSON.Polygon> => {
   // Convert to [lng, lat] for turf
   const A: [number, number] = [start[1], start[0]];
   const B: [number, number] = [end[1], end[0]];
@@ -127,9 +127,9 @@ export function computeThermometerExclusion(
  * Union multiple exclusion polygons into a single cumulative polygon.
  * Returns null if the array is empty.
  */
-export function unionExclusionZones(
+export const unionExclusionZones = (
   zones: GeoJSON.Feature<GeoJSON.Polygon>[],
-): GeoJSON.Feature<GeoJSON.Polygon | GeoJSON.MultiPolygon> | null {
+): GeoJSON.Feature<GeoJSON.Polygon | GeoJSON.MultiPolygon> | null => {
   if (zones.length === 0) return null;
 
   let result: GeoJSON.Feature<GeoJSON.Polygon | GeoJSON.MultiPolygon> | null = null;

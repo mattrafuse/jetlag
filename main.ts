@@ -12,14 +12,11 @@ import { initSettings } from "./settings";
 
 const map = L.map("map", { editable: true } as L.MapOptions).setView([43.6532, -79.3832], 12);
 
-const tileLayer = L.tileLayer(
-  "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png",
-  {
-    maxZoom: 19,
-    attribution:
-      '&copy; <a href="https://openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/">CARTO</a>',
-  },
-).addTo(map);
+const tileLayer = L.tileLayer("https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png", {
+  maxZoom: 19,
+  attribution:
+    '&copy; <a href="https://openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/">CARTO</a>',
+}).addTo(map);
 
 // Set map on station registry before layers register stations
 stationRegistry.setMap(map);

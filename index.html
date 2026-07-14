@@ -20,10 +20,20 @@
         height: 100%;
         width: 100%;
       }
+
+      #app-overlay {
+        position: fixed;
+        top: 0;
+        bottom: 0;
+        right: 0;
+        z-index: 400;
+      }
     </style>
   </head>
   <body>
     <div id="map"></div>
+
+    <div id="app-overlay"></div>
 
     <script type="module" src="/main.ts"></script>
   </body>

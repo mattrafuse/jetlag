@@ -1,8 +1,7 @@
 import * as turf from "@turf/turf";
 import L from "leaflet";
-import { QUARTER_MILE } from "../constants";
-import { stationRegistry } from "../questions/station-registry";
 import { borderGeoJSON } from "./border";
+import { createStation } from "./station";
 
 const borderFeature = borderGeoJSON.features[0] as GeoJSON.Feature<
   GeoJSON.Polygon,
@@ -47,13 +46,22 @@ const parseColour = (name?: string) => {
   return colour;
 };
 
-export function addTrainLayers(map: L.Map): L.LayerGroup {
+// Union Station appears as a station on nearly every GO corridor, each with
+// slightly different coordinates. We merge them into a single averaged entry.
+const isUnionStation = (feature: GeoJSON.Feature): boolean =>
+  !!feature?.properties?.name?.includes("Union Station");
+
+export const addTrainLayers = (map: L.Map): L.LayerGroup => {
   const group = L.layerGroup();
 
   // Dedicated pane for station radius circles so they don't stack opacity
   map.createPane("trainRadius");
   const radiusPane = map.getPane("trainRadius")!;
   radiusPane.style.zIndex = "405";
+
+  // Collect Union Station positions across all corridors so we can merge them
+  // into a single averaged entry instead of one per line.
+  const unionPoints: L.LatLng[] = [];
 
   for (const data of Object.values(geojsonModules)) {
     const collection: GeoJSON.FeatureCollection = JSON.parse(data);
@@ -62,6 +70,12 @@ export function addTrainLayers(map: L.Map): L.LayerGroup {
       coordsToLatLng: (coords: [number, number]) => L.latLng(coords[1], coords[0]),
       filter: (feature) => {
         if (feature.geometry.type === "Point") {
+          if (isUnionStation(feature)) {
+            const [lng, lat] = feature.geometry.coordinates as [number, number];
+            unionPoints.push(L.latLng(lat, lng));
+            return false;
+          }
+
           return turf.booleanPointInPolygon(feature.geometry, borderFeature);
         }
 
@@ -72,27 +86,11 @@ export function addTrainLayers(map: L.Map): L.LayerGroup {
 
         if (isStation) {
           const ll = latlng as L.LatLng;
-          const marker = L.circleMarker(ll, {
-            radius: 5,
-            fillColor: parseColour(feature?.properties?.route_name ?? feature?.properties?.name),
-            weight: 0,
-            fillOpacity: 1,
+          const colour = parseColour(feature?.properties?.route_name ?? feature?.properties?.name);
+          const { group } = createStation(`train-${feature?.properties?.name ?? feature.id}`, ll, {
+            fillColor: colour,
           });
-          const circle = L.circle(ll, {
-            radius: QUARTER_MILE,
-            fillColor: parseColour(feature?.properties?.route_name ?? feature?.properties?.name),
-            fillOpacity: 0.25,
-            weight: 0,
-          });
-          const fg = new L.FeatureGroup([marker, circle]);
-          stationRegistry.register(
-            `train-${feature?.properties?.name ?? feature.id}`,
-            ll,
-            circle,
-            marker,
-            fg,
-          );
-          return fg;
+          return group;
         }
 
         return L.circleMarker(latlng, {
@@ -116,6 +114,19 @@ export function addTrainLayers(map: L.Map): L.LayerGroup {
     });
 
     group.addLayer(geojsonLayer);
+  }
+
+  // Add a single merged Union Station entry at the average of all corridor positions.
+  if (unionPoints.length > 0) {
+    const avgLat = unionPoints.reduce((s, ll) => s + ll.lat, 0) / unionPoints.length;
+    const avgLng = unionPoints.reduce((s, ll) => s + ll.lng, 0) / unionPoints.length;
+    const unionLatLng = L.latLng(avgLat, avgLng);
+
+    const { group: unionGroup } = createStation("train-Union Station GO", unionLatLng, {
+      fillColor: "#444",
+      circle: { fillColor: "#888", fillOpacity: 0.5 },
+    });
+    group.addLayer(unionGroup);
   }
 
   group.addTo(map);

@@ -1,4 +1,4 @@
-import L from "leaflet";
+import type L from "leaflet";
 import { settingsCallbacks, settingsStore } from "./settings-store";
 
 interface SettingsConfig {
@@ -26,7 +26,7 @@ type SettingsState = Record<string, boolean>;
 const LIGHT_TILES = "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png";
 const DARK_TILES = "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png";
 
-function loadSettings(): SettingsState {
+const loadSettings = (): SettingsState => {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (raw) return JSON.parse(raw);
@@ -36,7 +36,7 @@ function loadSettings(): SettingsState {
   return {};
 }
 
-function saveSettings(state: SettingsState): void {
+const saveSettings = (state: SettingsState): void => {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
 }
 
@@ -49,10 +49,10 @@ const defaultState: SettingsState = {
 };
 
 // ── Layer toggle handler ───────────────────────────────────────
-function toggleLayer(
+const toggleLayer = (
   id: "chk-trains" | "chk-subway" | "chk-border" | "chk-location",
   checked: boolean,
-): void {
+): void => {
   const state = loadSettings();
   state[id] = checked;
   saveSettings(state);
@@ -87,7 +87,7 @@ function toggleLayer(
 }
 
 // ── Dark mode toggle handler ───────────────────────────────────
-function toggleDarkMode(checked: boolean): void {
+const toggleDarkMode = (checked: boolean): void => {
   const state = loadSettings();
   state["chk-dark"] = checked;
   saveSettings(state);
@@ -100,14 +100,14 @@ function toggleDarkMode(checked: boolean): void {
 }
 
 // ── Init ───────────────────────────────────────────────────────
-export function initSettings(settings: {
+export const initSettings = (settings: {
   map: L.Map;
   trainLayer?: L.LayerGroup | null;
   subwayLayer?: L.LayerGroup | null;
   borderLayer?: L.Layer | null;
   userLocationLayer?: L.Layer | null;
   tileLayer?: L.TileLayer | null;
-}): void {
+}): void => {
   config.map = settings.map;
   config.trainLayer = settings.trainLayer ?? null;
   config.subwayLayer = settings.subwayLayer ?? null;

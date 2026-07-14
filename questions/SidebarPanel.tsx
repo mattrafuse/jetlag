@@ -8,6 +8,7 @@ import {
   Box,
   Button,
   Checkbox,
+  Collapse,
   Divider,
   FormControlLabel,
   IconButton,
@@ -27,53 +28,47 @@ import type { AskedQuestion, AskedRadarQuestion, AskedThermometerQuestion } from
 // ── Helpers ────────────────────────────────────────────────────
 // Distances already used in the question history, so they can be
 // disabled in the dropdowns to prevent re-using a size.
-function usedRadarDistances(history: AskedQuestion[]): Set<number> {
+const usedRadarDistances = (history: AskedQuestion[]): Set<number> => {
   return new Set(
-    history
-      .filter((q): q is AskedRadarQuestion => q.type === "radar")
-      .map((q) => q.distance),
+    history.filter((q): q is AskedRadarQuestion => q.type === "radar").map((q) => q.distance),
   );
-}
-function usedThermometerDistances(history: AskedQuestion[]): Set<number> {
+};
+const usedThermometerDistances = (history: AskedQuestion[]): Set<number> => {
   return new Set(
     history
       .filter((q): q is AskedThermometerQuestion => q.type === "thermometer")
       .map((q) => q.distance),
   );
-}
+};
 
 // ── Hook to subscribe to the store ─────────────────────────────
-function useStore() {
+const useStore = () => {
   const [, setTick] = React.useState(0);
   useEffect(() => store.subscribe(() => setTick((n) => n + 1)), []);
   return store.get();
-}
+};
 
 // ── Toggle Button ──────────────────────────────────────────────
-function TogglePanelButton() {
+export const TogglePanelButton = () => {
   const s = useStore();
   return (
     <IconButton
       onClick={() => store.update({ panelOpen: !s.panelOpen })}
-      sx={(theme) => ({
-        position: "absolute",
-        top: 50,
-        right: s.panelOpen ? theme.spacing(35) : theme.spacing(1),
-        zIndex: 999,
+      sx={{
         bgcolor: "background.paper",
         boxShadow: 2,
         transition: "right 0.3s ease",
         "&:hover": { bgcolor: "grey.100" },
-      })}
+      }}
       aria-label="Toggle questions panel"
     >
       <HelpIcon />
     </IconButton>
   );
-}
+};
 
 // ── History Item ───────────────────────────────────────────────
-function HistoryItem({ question }: { question: AskedQuestion }) {
+const HistoryItem = ({ question }: { question: AskedQuestion }) => {
   const desc =
     question.type === "radar"
       ? `Radar ${question.label}: ${question.answer.toUpperCase()}`
@@ -109,10 +104,10 @@ function HistoryItem({ question }: { question: AskedQuestion }) {
       </IconButton>
     </Box>
   );
-}
+};
 
 // ── Radar Form ─────────────────────────────────────────────────
-function RadarForm() {
+const RadarForm = () => {
   const s = useStore();
   const used = usedRadarDistances(s.history);
 
@@ -218,10 +213,10 @@ function RadarForm() {
       )}
     </Box>
   );
-}
+};
 
 // ── Thermometer Form ───────────────────────────────────────────
-function ThermometerForm() {
+const ThermometerForm = () => {
   const s = useStore();
   const used = usedThermometerDistances(s.history);
 
@@ -308,10 +303,10 @@ function ThermometerForm() {
       )}
     </Box>
   );
-}
+};
 
 // ── Main Sidebar Panel ─────────────────────────────────────────
-export function SidebarPanel() {
+export const SidebarPanel = () => {
   const s = useStore();
 
   const handleTabChange = (_: React.MouseEvent, newTab: "radar" | "thermometer") => {
@@ -319,25 +314,18 @@ export function SidebarPanel() {
   };
 
   return (
-    <>
-      <TogglePanelButton />
-
+    <Collapse in={s.panelOpen} orientation="horizontal">
       <Paper
         elevation={8}
-        sx={(theme) => ({
-          position: "absolute",
-          top: 0,
-          right: s.panelOpen ? 0 : -330,
-          width: theme.spacing(34),
+        sx={{
           height: "100%",
-          zIndex: 1000,
           borderRadius: 0,
           transition: "right 0.3s ease",
           display: "flex",
           flexDirection: "column",
           overflow: "hidden",
           marginTop: "0 !important",
-        })}
+        }}
       >
         {/* Header */}
         <Box sx={{ px: 2, pt: 2, pb: 1 }}>
@@ -413,6 +401,6 @@ export function SidebarPanel() {
           />
         </Box>
       </Paper>
-    </>
+    </Collapse>
   );
-}
+};

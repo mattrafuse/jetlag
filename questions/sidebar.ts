@@ -41,7 +41,7 @@ const MILES_TO_METERS = 1609.344;
 const STORAGE_KEY = "jetlag-questions";
 const SETTINGS_KEY = "jetlag-question-settings";
 
-function loadHistory(): AskedQuestion[] {
+const loadHistory = (): AskedQuestion[] => {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (raw) return JSON.parse(raw);
@@ -50,10 +50,10 @@ function loadHistory(): AskedQuestion[] {
   }
   return [];
 }
-function saveHistory(h: AskedQuestion[]): void {
+const saveHistory = (h: AskedQuestion[]): void => {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(h));
 }
-function loadSettings(): { showRemoved: boolean } {
+const loadSettings = (): { showRemoved: boolean } => {
   try {
     const raw = localStorage.getItem(SETTINGS_KEY);
     if (raw) return JSON.parse(raw);
@@ -62,17 +62,17 @@ function loadSettings(): { showRemoved: boolean } {
   }
   return { showRemoved: false };
 }
-function saveSettings(s: { showRemoved: boolean }): void {
+const saveSettings = (s: { showRemoved: boolean }): void => {
   localStorage.setItem(SETTINGS_KEY, JSON.stringify(s));
 }
 
 let questionCounter = 0;
-function nextId(): string {
+const nextId = (): string => {
   return `q-${Date.now()}-${++questionCounter}`;
 }
 
 // ── Exclusion Layer ────────────────────────────────────────────
-function updateExclusionLayer(): void {
+const updateExclusionLayer = (): void => {
   if (exclusionLayer) {
     map.removeLayer(exclusionLayer);
   }
@@ -85,7 +85,7 @@ function updateExclusionLayer(): void {
 }
 
 // ── Station Filtering ──────────────────────────────────────────
-function applyStationFilter(): void {
+const applyStationFilter = (): void => {
   const cumulative = unionExclusionZones(exclusionZones.map((z) => z.polygon));
   stationRegistry.resetAll();
   if (cumulative) {
@@ -101,7 +101,7 @@ function applyStationFilter(): void {
   }
 }
 
-function processQuestion(question: AskedQuestion): void {
+const processQuestion = (question: AskedQuestion): void => {
   const polygon =
     question.type === "radar"
       ? computeRadarExclusion(question.center, question.distance, question.answer)
@@ -111,7 +111,7 @@ function processQuestion(question: AskedQuestion): void {
   applyStationFilter();
 }
 
-function removeQuestion(id: string): void {
+const removeQuestion = (id: string): void => {
   exclusionZones = exclusionZones.filter((z) => z.sourceQuestion.id !== id);
   saveHistory(loadHistory().filter((q) => q.id !== id));
   updateExclusionLayer();
@@ -120,7 +120,7 @@ function removeQuestion(id: string): void {
 }
 
 // ── Marker cleanup ─────────────────────────────────────────────
-function clearRadarMarker(): void {
+const clearRadarMarker = (): void => {
   if (radarCenterMarker) {
     map.removeLayer(radarCenterMarker);
     radarCenterMarker = null;
@@ -131,7 +131,7 @@ function clearRadarMarker(): void {
   }
   radarCenter = null;
 }
-function clearThermoMarkers(): void {
+const clearThermoMarkers = (): void => {
   if (thermoStartMarker) {
     map.removeLayer(thermoStartMarker);
     thermoStartMarker = null;
@@ -149,13 +149,13 @@ function clearThermoMarkers(): void {
 }
 
 // ── History rendering ──────────────────────────────────────────
-function renderHistory(): void {
+const renderHistory = (): void => {
   const history = loadHistory();
   store.update({ history });
 }
 
 // ── Tab switching ──────────────────────────────────────────────
-function switchTab(tab: "radar" | "thermometer"): void {
+const switchTab = (tab: "radar" | "thermometer"): void => {
   store.update({ activeTab: tab });
   if (tab === "radar") {
     clearThermoMarkers();
@@ -167,7 +167,7 @@ function switchTab(tab: "radar" | "thermometer"): void {
 }
 
 // ── Radar submission ───────────────────────────────────────────
-function submitRadar(answer: "yes" | "no"): void {
+const submitRadar = (answer: "yes" | "no"): void => {
   if (!radarCenter) return;
   const s = store.get();
   const customVal = s.radarCustomDistance;
@@ -199,7 +199,7 @@ function submitRadar(answer: "yes" | "no"): void {
 }
 
 // ── Thermometer submission ─────────────────────────────────────
-function submitThermometer(answer: "hotter" | "colder"): void {
+const submitThermometer = (answer: "hotter" | "colder"): void => {
   if (!thermoStart || !thermoEnd) return;
   const s = store.get();
   const selected = thermometerQuestions.find((q) => q.distance === s.thermoDistance);
@@ -222,12 +222,12 @@ function submitThermometer(answer: "hotter" | "colder"): void {
 }
 
 // ── Radar UI ───────────────────────────────────────────────────
-function setRadarCenter(center: [number, number] | null): void {
+const setRadarCenter = (center: [number, number] | null): void => {
   store.update({ radarCenter: center });
 }
 
 // Draw a circle previewing the radar radius based on the selected distance.
-function updateRadarRadiusPreview(): void {
+const updateRadarRadiusPreview = (): void => {
   if (!radarCenter) return;
   const s = store.get();
   let distance: number;
@@ -251,14 +251,14 @@ function updateRadarRadiusPreview(): void {
 }
 
 // ── Thermometer UI ─────────────────────────────────────────────
-function setThermoStart(start: [number, number] | null): void {
+const setThermoStart = (start: [number, number] | null): void => {
   store.update({ thermoStart: start });
 }
-function setThermoEnd(end: [number, number] | null): void {
+const setThermoEnd = (end: [number, number] | null): void => {
   store.update({ thermoEnd: end });
 }
 
-function startRadarPicking(): void {
+const startRadarPicking = (): void => {
   clearRadarMarker();
   store.update({ radarCenter: null });
   mapClickHandler = (e: L.LeafletMouseEvent) => {
@@ -287,7 +287,7 @@ function startRadarPicking(): void {
   map.on("click", mapClickHandler);
 }
 
-function startThermoPicking(): void {
+const startThermoPicking = (): void => {
   clearThermoMarkers();
   store.update({ thermoStart: null, thermoEnd: null });
   mapClickHandler = (e: L.LeafletMouseEvent) => {
@@ -331,7 +331,7 @@ function startThermoPicking(): void {
 }
 
 // ── Init ───────────────────────────────────────────────────────
-export function initQuestions(config: QuestionsConfig): void {
+export const initQuestions = (config: QuestionsConfig): void => {
   map = config.map;
 
   // Wire callbacks

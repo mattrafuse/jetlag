@@ -17,7 +17,7 @@ const outerBounds: [number, number][] = [
   [-90, -180],
 ];
 
-export function addBorderMask(map: L.Map): L.LayerGroup {
+export const addBorderMask = (map: L.Map): L.LayerGroup => {
   const group = L.layerGroup();
   const mask = L.polygon([outerBounds, borderCoords], {
     color: "#ff4444",
@@ -25,9 +25,12 @@ export function addBorderMask(map: L.Map): L.LayerGroup {
     fillColor: "#ff4444",
     fillOpacity: 0.15,
   });
+
+  // mask.enableEdit(map);
+
   group.addLayer(mask);
   group.addTo(map);
   return group;
-}
+};
 
 export { borderCoords, borderGeoJSON };

@@ -1,40 +1,68 @@
-import { Settings as SettingsIcon } from "@mui/icons-material";
-import { Box, Checkbox, FormControlLabel, IconButton, Paper, Typography } from "@mui/material";
+import { MyLocation as MyLocationIcon, Settings as SettingsIcon } from "@mui/icons-material";
+import {
+  Box,
+  Checkbox,
+  Collapse,
+  FormControlLabel,
+  IconButton,
+  Paper,
+  Typography,
+} from "@mui/material";
 import React, { useEffect } from "react";
+import { focusUserLocation, onLocationAvailabilityChange } from "./layers/location";
 import { settingsCallbacks, settingsStore } from "./settings-store";
 
 // ── Hook to subscribe to the settings store ────────────────────
-function useSettingsStore() {
+const useSettingsStore = () => {
   const [, setTick] = React.useState(0);
   useEffect(() => settingsStore.subscribe(() => setTick((n) => n + 1)), []);
   return settingsStore.get();
-}
+};
 
 // ── Toggle Button ──────────────────────────────────────────────
-function ToggleSettingsButton() {
+export const ToggleSettingsButton = () => {
   const s = useSettingsStore();
   return (
     <IconButton
       onClick={() => settingsStore.update({ panelOpen: !s.panelOpen })}
-      sx={(theme) => ({
-        position: "absolute",
-        top: 10,
-        right: s.panelOpen ? theme.spacing(35) : theme.spacing(1),
-        zIndex: 999,
+      sx={{
         bgcolor: "background.paper",
         boxShadow: 2,
         transition: "right 0.3s ease",
         "&:hover": { bgcolor: "grey.100" },
-      })}
+      }}
       aria-label="Toggle settings panel"
     >
       <SettingsIcon />
     </IconButton>
   );
-}
+};
+
+// ── Locate Button ─────────────────────────────────────────────
+export const LocateButton = () => {
+  const [available, setAvailable] = React.useState(false);
+
+  React.useEffect(() => onLocationAvailabilityChange(setAvailable), []);
+
+  if (!available) return null;
+
+  return (
+    <IconButton
+      onClick={() => focusUserLocation()}
+      sx={{
+        bgcolor: "background.paper",
+        boxShadow: 2,
+        "&:hover": { bgcolor: "grey.100" },
+      }}
+      aria-label="Focus on my location"
+    >
+      <MyLocationIcon />
+    </IconButton>
+  );
+};
 
 // ── Settings Panel ─────────────────────────────────────────────
-export function SettingsPanel() {
+export const SettingsPanel = () => {
   const s = useSettingsStore();
 
   const layers = [
@@ -45,27 +73,18 @@ export function SettingsPanel() {
   ];
 
   return (
-    <>
-      <ToggleSettingsButton />
-
+    <Collapse in={s.panelOpen} orientation="horizontal">
       <Paper
         elevation={8}
-        sx={(theme) => ({
-          position: "absolute",
-          top: 0,
-          right: s.panelOpen ? 0 : -270,
-          width: theme.spacing(34),
-          height: "100%",
-          zIndex: 1000,
+        sx={{
           borderRadius: 0,
           transition: "right 0.3s ease",
           display: "flex",
           flexDirection: "column",
           overflow: "hidden",
-          pt: 6,
-          px: 2,
+          p: 2,
           marginTop: "0 !important",
-        })}
+        }}
       >
         <Typography variant="h6" sx={{ fontWeight: 600, mb: 2 }}>
           Map Settings
@@ -106,6 +125,6 @@ export function SettingsPanel() {
           />
         </Box>
       </Paper>
-    </>
+    </Collapse>
   );
-}
+};
