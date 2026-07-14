@@ -1,11 +1,11 @@
 import L from "leaflet";
 import "leaflet-editable";
 import "leaflet/dist/leaflet.css";
-import { addBorderMask } from "./border";
-import { addUserLocation } from "./location";
+import { addBorderMask } from "./layers/border";
+import { addUserLocation } from "./layers/location";
+import { addSubwayLayers } from "./layers/subway";
+import { addTrainLayers } from "./layers/train";
 import { initSettings } from "./settings";
-import { addSubwayLayers } from "./subway";
-import { addTrainLayers } from "./train";
 
 const map = L.map("map", { editable: true } as L.MapOptions).setView([43.6532, -79.3832], 12);
 

@@ -1,7 +1,7 @@
 import * as turf from "@turf/turf";
 import L from "leaflet";
+import { QUARTER_MILE } from "../constants";
 import { borderGeoJSON } from "./border";
-import { QUARTER_MILE } from "./constants";
 
 const borderFeature = borderGeoJSON.features[0] as GeoJSON.Feature<
   GeoJSON.Polygon,
