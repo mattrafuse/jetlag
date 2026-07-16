@@ -27,7 +27,7 @@ interface QuestionsConfig {
 }
 
 // ── Module state ───────────────────────────────────────────────
-let map: L.Map;
+export let map: L.Map;
 let exclusionZones: ExclusionZone[] = [];
 let exclusionLayer: L.GeoJSON | null = null;
 let showRemovedStations = false;
@@ -163,10 +163,8 @@ export const initQuestions = (config: QuestionsConfig): void => {
   };
 
   // Listen for question-removal events dispatched by the React UI.
-  window.addEventListener(
-    "jetlag-remove-question",
-    ((e: CustomEvent<string>) => removeQuestion(e.detail)) as EventListener,
-  );
+  window.addEventListener("jetlag-remove-question", ((e: CustomEvent<string>) =>
+    removeQuestion(e.detail)) as EventListener);
 
   // Rebuild exclusion zones from persisted history.
   for (const q of loadHistory()) {

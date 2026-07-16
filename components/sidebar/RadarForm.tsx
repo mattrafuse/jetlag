@@ -85,6 +85,7 @@ export const RadarForm = () => {
         <Button
           size="small"
           color="error"
+          variant="outlined"
           sx={{ alignSelf: "flex-start", textTransform: "none" }}
           onClick={handleReset}
         >

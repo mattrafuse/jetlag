@@ -77,4 +77,47 @@ describe("unionExclusionZones", () => {
     // a and b overlap, c is disjoint → MultiPolygon
     expect(result!.geometry.type).toBe("MultiPolygon");
   });
+
+  // ── Regression: turf v7 union API ────────────────────────────
+  // turf v7 changed `turf.union` to take a FeatureCollection instead of
+  // two features. The old two-arg call threw silently inside a try/catch,
+  // so only the first zone was ever kept. These tests verify the fix.
+  it("actually merges two disjoint zones (regression for turf v7 API)", () => {
+    const a = squarePolygon(0, 0, 1);
+    const b = squarePolygon(10, 10, 1);
+    const result = unionExclusionZones([a, b]);
+
+    // If the union silently failed (old bug), result would be just `a`
+    // and the point in `b` would NOT be within it.
+    expect(result).not.toBeNull();
+    const pointInB = turf.point([10.5, 10.5]);
+    expect(turf.booleanWithin(pointInB, result!)).toBe(true);
+  });
+
+  it("actually merges three zones including disjoint ones (regression)", () => {
+    const a = squarePolygon(0, 0, 1);
+    const b = squarePolygon(2, 0, 1);
+    const c = squarePolygon(20, 20, 1);
+    const result = unionExclusionZones([a, b, c]);
+
+    expect(result).not.toBeNull();
+    // Point in the last (disjoint) zone must be in the union.
+    // If only the first zone was kept, this would fail.
+    const pointInC = turf.point([20.5, 20.5]);
+    expect(turf.booleanWithin(pointInC, result!)).toBe(true);
+  });
+
+  it("merging many zones preserves all of them (regression)", () => {
+    const zones: GeoJSON.Feature<GeoJSON.Polygon>[] = [];
+    for (let i = 0; i < 10; i++) {
+      zones.push(squarePolygon(i * 5, 0, 1));
+    }
+    const result = unionExclusionZones(zones);
+    expect(result).not.toBeNull();
+
+    // Check a point in the LAST zone — if the union silently failed
+    // after the first zone, this point would not be in the result.
+    const pointInLast = turf.point([45.5, 0.5]);
+    expect(turf.booleanWithin(pointInLast, result!)).toBe(true);
+  });
 });

@@ -2,9 +2,15 @@
 // Pure functions that compute exclusion polygons from thermometer answers.
 
 import * as turf from "@turf/turf";
+import { clipToGameBorder } from "../exclusion";
 
-/** Degrees — more than enough to cover any game area. */
-const EXTENT = 500;
+/**
+ * Degrees of latitude/longitude to extend the half-plane polygon beyond the
+ * midpoint. The polygon is clipped to the game border afterwards, so this
+ * just needs to be large enough that the half-plane fully covers the game
+ * area on the excluded side.
+ */
+const EXTENT = 90;
 
 /**
  * Compute the exclusion polygon for a thermometer question.
@@ -12,6 +18,9 @@ const EXTENT = 500;
  * The perpendicular bisector of the segment from start to end divides the plane.
  * - "hotter" (end is closer to hider): Exclude the half-plane containing the START point.
  * - "colder" (end is farther from hider): Exclude the half-plane containing the END point.
+ *
+ * The resulting polygon is clipped to the game border so it never extends
+ * beyond the playable area.
  */
 export const computeThermometerExclusion = (
   start: [number, number], // [lat, lng]
@@ -67,9 +76,11 @@ export const computeThermometerExclusion = (
   const sideDx = (dx / len) * sign;
   const sideDy = (dy / len) * sign;
 
-  // Build a large quad covering the excluded half-plane.
+  // Build a large quad covering the excluded half-plane, then clip to the
+  // game border so the polygon stays within the playable area.
   const far1: [number, number] = [p1[0] + sideDx * EXTENT, p1[1] + sideDy * EXTENT];
   const far2: [number, number] = [p2[0] + sideDx * EXTENT, p2[1] + sideDy * EXTENT];
 
-  return turf.polygon([[p1, p2, far2, far1, p1]]);
+  const halfPlane = turf.polygon([[p1, p2, far2, far1, p1]]);
+  return clipToGameBorder(halfPlane);
 };
