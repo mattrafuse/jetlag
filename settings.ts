@@ -1,6 +1,6 @@
 import type L from "leaflet";
 import { exportBorderGeoJSON, setBorderEditable } from "./layers/border";
-import { stationRegistry } from "./questions/station-registry";
+import { stationRegistry } from "./questions";
 import { settingsCallbacks, settingsStore } from "./settings-store";
 
 interface SettingsConfig {

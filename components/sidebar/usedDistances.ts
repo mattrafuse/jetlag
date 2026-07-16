@@ -1,8 +1,8 @@
 import type {
-  AskedQuestion,
-  AskedRadarQuestion,
-  AskedThermometerQuestion,
-} from "../../questions/types";
+    AskedQuestion,
+    AskedRadarQuestion,
+    AskedThermometerQuestion,
+} from "../../questions";
 
 // ── Helpers ────────────────────────────────────────────────────
 // Distances already used in the question history, so they can be

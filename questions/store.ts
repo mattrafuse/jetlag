@@ -1,6 +1,9 @@
 import type { AskedQuestion } from "./types";
 
-// ── Simple reactive store shared between React UI and sidebar logic ──
+// ── Simple reactive store shared between React UI and sidebar logic ───
+// This store is shared across both question types. Per-type fields
+// (radarCenter, thermoStart, etc.) live here so the UI can subscribe
+// to a single source of truth.
 
 export interface QuestionsState {
   panelOpen: boolean;

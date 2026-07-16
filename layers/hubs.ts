@@ -71,6 +71,12 @@ export const HUBS: HubDefinition[] = [
     color: HUB_COLOR,
     match: (name) => name === "St George",
   },
+  {
+    id: "Downsview Park",
+    label: "Downsview Park",
+    color: HUB_COLOR,
+    match: (name) => name.includes("Downsview Park"),
+  },
 ];
 
 export const findHub = (name: string): HubDefinition | undefined =>

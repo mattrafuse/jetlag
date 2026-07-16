@@ -6,8 +6,7 @@ import { addUserLocation } from "./layers/location";
 import { addSubwayLayers } from "./layers/subway";
 import { addTrainLayers } from "./layers/train";
 import { initOverlay } from "./overlay";
-import { initQuestions } from "./questions/sidebar";
-import { stationRegistry } from "./questions/station-registry";
+import { initQuestions, stationRegistry } from "./questions";
 import { initSettings } from "./settings";
 
 const map = L.map("map", { editable: true } as L.MapOptions).setView([43.6532, -79.3832], 12);

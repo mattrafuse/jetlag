@@ -1,6 +1,5 @@
 import { Box, Button, MenuItem, Paper, Select, Typography } from "@mui/material";
-import { thermometerQuestions } from "../../questions/data";
-import { callbacks, store } from "../../questions/store";
+import { callbacks, store, thermometerQuestions } from "../../questions";
 import { useStore } from "./useStore";
 import { usedThermometerDistances } from "./usedDistances";
 

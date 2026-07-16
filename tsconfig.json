@@ -19,5 +19,6 @@
     "questions/**/*.ts",
     "questions/**/*.tsx",
     "types.ts"
-  ]
+  ],
+  "exclude": ["questions/**/*.test.ts"]
 }

@@ -1,14 +1,14 @@
 import { Radar as RadarIcon, Thermostat as ThermoIcon } from "@mui/icons-material";
 import {
-  Box,
-  Checkbox,
-  Collapse,
-  Divider,
-  FormControlLabel,
-  Paper,
-  ToggleButton,
-  ToggleButtonGroup,
-  Typography,
+    Box,
+    Checkbox,
+    Collapse,
+    Divider,
+    FormControlLabel,
+    Paper,
+    ToggleButton,
+    ToggleButtonGroup,
+    Typography,
 } from "@mui/material";
 import React from "react";
 import { HistoryItem } from "../components/sidebar/HistoryItem";
@@ -16,7 +16,7 @@ import { RadarForm } from "../components/sidebar/RadarForm";
 import { StationList } from "../components/sidebar/StationList";
 import { ThermometerForm } from "../components/sidebar/ThermometerForm";
 import { useStore } from "../components/sidebar/useStore";
-import { callbacks } from "../questions/store";
+import { callbacks } from "../questions";
 
 // ── Main Sidebar Panel ─────────────────────────────────────────
 export const SidebarPanel = () => {

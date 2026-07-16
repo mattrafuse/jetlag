@@ -1,6 +1,5 @@
 import { Box, Button, MenuItem, Paper, Select, TextField, Typography } from "@mui/material";
-import { radarQuestions } from "../../questions/data";
-import { callbacks, store } from "../../questions/store";
+import { callbacks, radarQuestions, store } from "../../questions";
 import { useStore } from "./useStore";
 import { usedRadarDistances } from "./usedDistances";
 

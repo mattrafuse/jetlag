@@ -1,5 +1,5 @@
 import React, { useEffect } from "react";
-import { store } from "../../questions/store";
+import { store } from "../../questions";
 
 // ── Hook to subscribe to the store ─────────────────────────────
 export const useStore = () => {

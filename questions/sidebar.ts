@@ -1,81 +1,47 @@
+// ── Question Orchestrator ───────────────────────────────────────
+// Composes the radar and thermometer controllers, manages the shared
+// exclusion-zone list, station filtering, history persistence, and
+// wires the callback registry used by the React UI.
+//
+// This is the ONLY module outside the `radar/` and `thermometer/`
+// subfolders that knows about both question types. External modules
+// import `initQuestions` and `stationRegistry` from the barrel
+// (`index.ts`); they are opaque to the per-type internals.
+
 import L from "leaflet";
-import { radarQuestions, thermometerQuestions } from "./data";
-import {
-  computeRadarExclusion,
-  computeThermometerExclusion,
-  unionExclusionZones,
-} from "./exclusion";
+import { unionExclusionZones } from "./exclusion";
+import { loadHistory, loadSettings, nextId, saveHistory, saveSettings } from "./history";
+import { computeRadarExclusion } from "./radar/exclusion";
+import { createRadarController } from "./radar/sidebar";
+import type { AskedRadarQuestion } from "./radar/types";
 import { stationRegistry } from "./station-registry";
 import { callbacks, store } from "./store";
-import type {
-  AskedQuestion,
-  AskedRadarQuestion,
-  AskedThermometerQuestion,
-  ExclusionZone,
-} from "./types";
+import { computeThermometerExclusion } from "./thermometer/exclusion";
+import { createThermometerController } from "./thermometer/sidebar";
+import type { AskedThermometerQuestion } from "./thermometer/types";
+import type { AskedQuestion, ExclusionZone } from "./types";
 
-// ── Types ──────────────────────────────────────────────────────
+// ── Config ─────────────────────────────────────────────────────
 interface QuestionsConfig {
   map: L.Map;
 }
 
-// ── State ──────────────────────────────────────────────────────
+// ── Module state ───────────────────────────────────────────────
 let map: L.Map;
 let exclusionZones: ExclusionZone[] = [];
 let exclusionLayer: L.GeoJSON | null = null;
 let showRemovedStations = false;
 
-let thermoStart: [number, number] | null = null;
-let thermoEnd: [number, number] | null = null;
-let thermoStartMarker: L.Marker | null = null;
-let thermoEndMarker: L.Marker | null = null;
-let thermoLine: L.Polyline | null = null;
-let mapClickHandler: ((e: L.LeafletMouseEvent) => void) | null = null;
+// Controllers are created in `initQuestions` and live for the
+// lifetime of the page.
+let radarController: ReturnType<typeof createRadarController> | null = null;
+let thermoController: ReturnType<typeof createThermometerController> | null = null;
 
-let radarCenter: [number, number] | null = null;
-let radarCenterMarker: L.Marker | null = null;
-let radarRadiusPreview: L.Circle | null = null;
-
-const MILES_TO_METERS = 1609.344;
-
-// ── Persistence ────────────────────────────────────────────────
-const STORAGE_KEY = "jetlag-questions";
-const SETTINGS_KEY = "jetlag-question-settings";
-
-const loadHistory = (): AskedQuestion[] => {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (raw) return JSON.parse(raw);
-  } catch {
-    /* ignore */
-  }
-  return [];
-};
-const saveHistory = (h: AskedQuestion[]): void => {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(h));
-};
-const loadSettings = (): { showRemoved: boolean } => {
-  try {
-    const raw = localStorage.getItem(SETTINGS_KEY);
-    if (raw) return JSON.parse(raw);
-  } catch {
-    /* ignore */
-  }
-  return { showRemoved: false };
-};
-const saveSettings = (s: { showRemoved: boolean }): void => {
-  localStorage.setItem(SETTINGS_KEY, JSON.stringify(s));
-};
-
-let questionCounter = 0;
-const nextId = (): string => {
-  return `q-${Date.now()}-${++questionCounter}`;
-};
-
-// ── Exclusion Layer ────────────────────────────────────────────
+// ── Exclusion layer ─────────────────────────────────────────────
 const updateExclusionLayer = (): void => {
   if (exclusionLayer) {
     map.removeLayer(exclusionLayer);
+    exclusionLayer = null;
   }
   const cumulative = unionExclusionZones(exclusionZones.map((z) => z.polygon));
   if (cumulative) {
@@ -85,7 +51,11 @@ const updateExclusionLayer = (): void => {
   }
 };
 
-// ── Station Filtering ──────────────────────────────────────────
+// ── Station filtering ───────────────────────────────────────────
+const refreshStationStatuses = (): void => {
+  store.update({ stations: stationRegistry.getStationStatuses() });
+};
+
 const applyStationFilter = (): void => {
   const cumulative = unionExclusionZones(exclusionZones.map((z) => z.polygon));
   stationRegistry.resetAll();
@@ -103,17 +73,16 @@ const applyStationFilter = (): void => {
   refreshStationStatuses();
 };
 
-// Push the current station exclusion statuses into the store so the
-// sidebar can render the station list.
-const refreshStationStatuses = (): void => {
-  store.update({ stations: stationRegistry.getStationStatuses() });
+// ── Question processing ─────────────────────────────────────────
+const computeExclusionPolygon = (question: AskedQuestion): GeoJSON.Feature<GeoJSON.Polygon> => {
+  if (question.type === "radar") {
+    return computeRadarExclusion(question.center, question.distance, question.answer);
+  }
+  return computeThermometerExclusion(question.start, question.end, question.answer);
 };
 
 const processQuestion = (question: AskedQuestion): void => {
-  const polygon =
-    question.type === "radar"
-      ? computeRadarExclusion(question.center, question.distance, question.answer)
-      : computeThermometerExclusion(question.start, question.end, question.answer);
+  const polygon = computeExclusionPolygon(question);
   exclusionZones.push({ polygon, sourceQuestion: question });
   updateExclusionLayer();
   applyStationFilter();
@@ -128,234 +97,63 @@ const removeQuestion = (id: string): void => {
   refreshStationStatuses();
 };
 
-// ── Marker cleanup ─────────────────────────────────────────────
-const clearRadarMarker = (): void => {
-  if (radarCenterMarker) {
-    map.removeLayer(radarCenterMarker);
-    radarCenterMarker = null;
-  }
-  if (radarRadiusPreview) {
-    map.removeLayer(radarRadiusPreview);
-    radarRadiusPreview = null;
-  }
-  radarCenter = null;
-};
-const clearThermoMarkers = (): void => {
-  if (thermoStartMarker) {
-    map.removeLayer(thermoStartMarker);
-    thermoStartMarker = null;
-  }
-  if (thermoEndMarker) {
-    map.removeLayer(thermoEndMarker);
-    thermoEndMarker = null;
-    if (thermoLine) {
-      map.removeLayer(thermoLine);
-      thermoLine = null;
-    }
-  }
-  thermoStart = null;
-  thermoEnd = null;
-  if (mapClickHandler) {
-    map.off("click", mapClickHandler);
-    mapClickHandler = null;
-  }
-};
-
-// ── History rendering ──────────────────────────────────────────
+// ── History rendering ───────────────────────────────────────────
 const renderHistory = (): void => {
-  const history = loadHistory();
-  store.update({ history });
+  store.update({ history: loadHistory() });
 };
 
-// ── Tab switching ──────────────────────────────────────────────
+// ── Tab switching ───────────────────────────────────────────────
 const switchTab = (tab: "radar" | "thermometer"): void => {
   store.update({ activeTab: tab });
   if (tab === "radar") {
-    clearThermoMarkers();
-    startRadarPicking();
+    thermoController?.clearMarkers();
+    radarController?.startPicking();
   } else {
-    clearRadarMarker();
-    startThermoPicking();
+    radarController?.clearMarker();
+    thermoController?.startPicking();
   }
 };
 
-// ── Radar submission ───────────────────────────────────────────
-const submitRadar = (answer: "yes" | "no"): void => {
-  if (!radarCenter) return;
-  const s = store.get();
-  const customVal = s.radarCustomDistance;
-  let distance: number;
-  let label: string;
-  if (s.radarUseCustom && !Number.isNaN(customVal) && customVal > 0) {
-    distance = customVal;
-    label = `${customVal} Mile${customVal === 1 ? "" : "s"}`;
-  } else {
-    const selected = radarQuestions.find((q) => q.distance === s.radarDistance);
-    if (!selected) return;
-    distance = selected.distance;
-    label = selected.label;
-  }
-  const q: AskedRadarQuestion = {
-    id: nextId(),
-    type: "radar",
-    distance,
-    label,
-    center: radarCenter,
-    answer,
-    timestamp: Date.now(),
-  };
-  saveHistory([...loadHistory(), q]);
-  processQuestion(q);
+// ── Question-asked callbacks (passed to controllers) ────────────
+const onRadarQuestionAsked = (question: AskedRadarQuestion): void => {
+  saveHistory([...loadHistory(), question]);
+  processQuestion(question);
   renderHistory();
-  clearRadarMarker();
-  store.update({ radarCenter: null });
 };
 
-// ── Thermometer submission ─────────────────────────────────────
-const submitThermometer = (answer: "hotter" | "colder"): void => {
-  if (!thermoStart || !thermoEnd) return;
-  const s = store.get();
-  const selected = thermometerQuestions.find((q) => q.distance === s.thermoDistance);
-  if (!selected) return;
-  const q: AskedThermometerQuestion = {
-    id: nextId(),
-    type: "thermometer",
-    distance: selected.distance,
-    label: selected.label,
-    start: thermoStart,
-    end: thermoEnd,
-    answer,
-    timestamp: Date.now(),
-  };
-  saveHistory([...loadHistory(), q]);
-  processQuestion(q);
+const onThermoQuestionAsked = (question: AskedThermometerQuestion): void => {
+  saveHistory([...loadHistory(), question]);
+  processQuestion(question);
   renderHistory();
-  clearThermoMarkers();
-  store.update({ thermoStart: null, thermoEnd: null });
 };
 
-// ── Radar UI ───────────────────────────────────────────────────
-const setRadarCenter = (center: [number, number] | null): void => {
-  store.update({ radarCenter: center });
-};
-
-// Draw a circle previewing the radar radius based on the selected distance.
-const updateRadarRadiusPreview = (): void => {
-  if (!radarCenter) return;
-  const s = store.get();
-  let distance: number;
-  if (s.radarUseCustom && !Number.isNaN(s.radarCustomDistance) && s.radarCustomDistance > 0) {
-    distance = s.radarCustomDistance;
-  } else {
-    distance = s.radarDistance;
-  }
-  if (radarRadiusPreview) {
-    map.removeLayer(radarRadiusPreview);
-    radarRadiusPreview = null;
-  }
-  radarRadiusPreview = L.circle(radarCenter, {
-    radius: distance * MILES_TO_METERS,
-    color: "#3388ff",
-    weight: 2,
-    dashArray: "5, 5",
-    fillColor: "#3388ff",
-    fillOpacity: 0.08,
-  }).addTo(map);
-};
-
-// ── Thermometer UI ─────────────────────────────────────────────
-const setThermoStart = (start: [number, number] | null): void => {
-  store.update({ thermoStart: start });
-};
-const setThermoEnd = (end: [number, number] | null): void => {
-  store.update({ thermoEnd: end });
-};
-
-const startRadarPicking = (): void => {
-  clearRadarMarker();
-  store.update({ radarCenter: null });
-  mapClickHandler = (e: L.LeafletMouseEvent) => {
-    const s = store.get();
-    if (!s.panelOpen || s.activeTab !== "radar") return;
-    radarCenter = [e.latlng.lat, e.latlng.lng];
-    if (radarCenterMarker) {
-      radarCenterMarker.setLatLng(e.latlng);
-    } else {
-      radarCenterMarker = L.marker(e.latlng, {
-        icon: L.divIcon({
-          className: "questions-radar-marker",
-          html: `
-            <div class="questions-radar-bullseye">
-              <span class="ring ring-outer"></span>
-              <span class="ring ring-mid"></span>
-              <span class="ring ring-inner"></span>
-            </div>`,
-          iconSize: [36, 36],
-          iconAnchor: [18, 18],
-        }),
-      }).addTo(map);
-    }
-    updateRadarRadiusPreview();
-    setRadarCenter(radarCenter);
-  };
-  map.on("click", mapClickHandler);
-};
-
-const startThermoPicking = (): void => {
-  clearThermoMarkers();
-  store.update({ thermoStart: null, thermoEnd: null });
-  mapClickHandler = (e: L.LeafletMouseEvent) => {
-    if (!thermoStart) {
-      thermoStart = [e.latlng.lat, e.latlng.lng];
-      thermoStartMarker = L.marker(e.latlng, {
-        icon: L.divIcon({
-          className: "questions-thermo-marker",
-          html: '<div class="questions-thermo-marker-dot start">S</div>',
-          iconSize: [24, 24],
-          iconAnchor: [12, 12],
-        }),
-      }).addTo(map);
-      setThermoStart(thermoStart);
-    } else if (!thermoEnd) {
-      thermoEnd = [e.latlng.lat, e.latlng.lng];
-      thermoEndMarker = L.marker(e.latlng, {
-        icon: L.divIcon({
-          className: "questions-thermo-marker",
-          html: '<div class="questions-thermo-marker-dot end">E</div>',
-          iconSize: [24, 24],
-          iconAnchor: [12, 12],
-        }),
-      }).addTo(map);
-      if (thermoStartMarker) {
-        thermoLine = L.polyline([thermoStartMarker.getLatLng(), e.latlng], {
-          color: "#3388ff",
-          weight: 2,
-          dashArray: "5, 5",
-        }).addTo(map);
-      }
-      setThermoEnd(thermoEnd);
-      const h = mapClickHandler;
-      if (h) {
-        map.off("click", h);
-        mapClickHandler = null;
-      }
-    }
-  };
-  map.on("click", mapClickHandler);
-};
-
-// ── Init ───────────────────────────────────────────────────────
+// ── Init ────────────────────────────────────────────────────────
 export const initQuestions = (config: QuestionsConfig): void => {
   map = config.map;
 
-  // Wire callbacks
-  callbacks.submitRadar = submitRadar;
-  callbacks.submitThermo = submitThermometer;
+  // Create per-type controllers, injecting shared dependencies.
+  radarController = createRadarController({
+    map,
+    store,
+    nextId,
+    onQuestionAsked: onRadarQuestionAsked,
+  });
+
+  thermoController = createThermometerController({
+    map,
+    store,
+    nextId,
+    onQuestionAsked: onThermoQuestionAsked,
+  });
+
+  // Wire the callback registry used by the React UI.
+  callbacks.submitRadar = (answer) => radarController?.submit(answer);
+  callbacks.submitThermo = (answer) => thermoController?.submit(answer);
   callbacks.switchTab = switchTab;
-  callbacks.startRadarPicking = startRadarPicking;
-  callbacks.startThermoPicking = startThermoPicking;
-  callbacks.clearRadarMarker = clearRadarMarker;
-  callbacks.clearThermoMarkers = clearThermoMarkers;
+  callbacks.startRadarPicking = () => radarController?.startPicking();
+  callbacks.startThermoPicking = () => thermoController?.startPicking();
+  callbacks.clearRadarMarker = () => radarController?.clearMarker();
+  callbacks.clearThermoMarkers = () => thermoController?.clearMarkers();
   callbacks.setShowRemoved = (v: boolean) => {
     showRemovedStations = v;
     store.update({ showRemoved: v });
@@ -364,17 +162,15 @@ export const initQuestions = (config: QuestionsConfig): void => {
     refreshStationStatuses();
   };
 
-  // Listen for question removal events from the React UI
-  window.addEventListener("jetlag-remove-question", ((e: CustomEvent<string>) => {
-    removeQuestion(e.detail);
-  }) as EventListener);
+  // Listen for question-removal events dispatched by the React UI.
+  window.addEventListener(
+    "jetlag-remove-question",
+    ((e: CustomEvent<string>) => removeQuestion(e.detail)) as EventListener,
+  );
 
+  // Rebuild exclusion zones from persisted history.
   for (const q of loadHistory()) {
-    const polygon =
-      q.type === "radar"
-        ? computeRadarExclusion(q.center, q.distance, q.answer)
-        : computeThermometerExclusion(q.start, q.end, q.answer);
-    exclusionZones.push({ polygon, sourceQuestion: q });
+    exclusionZones.push({ polygon: computeExclusionPolygon(q), sourceQuestion: q });
   }
 
   showRemovedStations = loadSettings().showRemoved;
@@ -383,10 +179,5 @@ export const initQuestions = (config: QuestionsConfig): void => {
   updateExclusionLayer();
   applyStationFilter();
   renderHistory();
-  startRadarPicking();
-
-  // Keep the radius preview in sync with distance changes from the UI.
-  store.subscribe(() => {
-    if (radarCenter) updateRadarRadiusPreview();
-  });
+  radarController.startPicking();
 };

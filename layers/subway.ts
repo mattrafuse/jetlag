@@ -27,7 +27,7 @@ export const addSubwayLayers = (map: L.Map, onReady?: () => void): L.LayerGroup 
     url: "https://gis.toronto.ca/arcgis/rest/services/cot_geospatial7/mapserver/11",
     isModern: true,
     style: (feature: Feature<LineString>) => {
-      if ([4, 6].includes(feature.properties?.ROUTE_ID)) {
+      if (6 == feature.properties?.ROUTE_ID) {
         return { opacity: 0 };
       }
 
@@ -78,13 +78,11 @@ export const addSubwayLayers = (map: L.Map, onReady?: () => void): L.LayerGroup 
     pointToLayer: (feature, latlng) => {
       let closest: [number, Feature<LineString>] | null = null;
       routes.eachFeature((subwayLine) => {
-        if (![4, 5, 6].includes(subwayLine.feature.properties?.ROUTE_ID)) {
-          const currentDistance = turf.nearestPointOnLine(subwayLine.feature, feature).properties
-            .pointDistance;
+        const currentDistance = turf.nearestPointOnLine(subwayLine.feature, feature).properties
+          .pointDistance;
 
-          if (!closest || closest[0] > currentDistance) {
-            closest = [currentDistance, subwayLine.feature as Feature<LineString>];
-          }
+        if (!closest || closest[0] > currentDistance) {
+          closest = [currentDistance, subwayLine.feature as Feature<LineString>];
         }
       });
 

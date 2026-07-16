@@ -1,6 +1,6 @@
 import CloseIcon from "@mui/icons-material/Close";
 import { Box, IconButton, Typography } from "@mui/material";
-import type { AskedQuestion } from "../../questions/types";
+import type { AskedQuestion } from "../../questions";
 
 // ── History Item ───────────────────────────────────────────────
 export const HistoryItem = ({ question }: { question: AskedQuestion }) => {

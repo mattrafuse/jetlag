@@ -1,6 +1,6 @@
 import { HelpOutlined as HelpIcon } from "@mui/icons-material";
 import { darken, IconButton, lighten } from "@mui/material";
-import { store } from "../../questions/store";
+import { store } from "../../questions";
 import { useStore } from "./useStore";
 
 // ── Toggle Button ──────────────────────────────────────────────
