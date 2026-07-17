@@ -9,6 +9,7 @@ import { settingsStore } from "./settings/store";
 // follows dark mode).
 describe("initOverlay", () => {
   let container: HTMLDivElement;
+  let teardown: (() => void) | undefined;
 
   beforeEach(() => {
     container = document.createElement("div");
@@ -19,28 +20,36 @@ describe("initOverlay", () => {
   });
 
   afterEach(() => {
+    // Tear down the overlay (unmount + unsubscribe) so the module-level
+    // settings store doesn't fire stale subscriptions in later tests.
+    teardown?.();
+    teardown = undefined;
     container.remove();
   });
 
   it("mounts the overlay into #app-overlay", async () => {
     await act(async () => {
-      initOverlay();
+      teardown = initOverlay();
     });
     // The settings toggle button (aria-label) should be present.
     expect(container.querySelector('[aria-label="Toggle settings panel"]')).not.toBeNull();
     expect(container.querySelector('[aria-label="Toggle questions panel"]')).not.toBeNull();
   });
 
-  it("subscribes to the settings store so it re-renders on change", () => {
+  it("subscribes to the settings store so it re-renders on change", async () => {
     const subscribeSpy = vi.spyOn(settingsStore, "subscribe");
-    initOverlay();
-    expect(subscribeSpy).toHaveBeenCalledTimes(1);
+    await act(async () => {
+      teardown = initOverlay();
+    });
+    // initOverlay subscribes directly, and each component using the
+    // settings store hook subscribes via its effect.
+    expect(subscribeSpy).toHaveBeenCalled();
     subscribeSpy.mockRestore();
   });
 
   it("reflects dark mode changes from the store", async () => {
     await act(async () => {
-      initOverlay();
+      teardown = initOverlay();
     });
     act(() => {
       settingsStore.update({ darkMode: true });
@@ -50,7 +59,7 @@ describe("initOverlay", () => {
 
   it("renders the settings panel when panelOpen is true", async () => {
     await act(async () => {
-      initOverlay();
+      teardown = initOverlay();
     });
     act(() => {
       settingsStore.update({ panelOpen: true });

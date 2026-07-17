@@ -15,6 +15,7 @@ import { settingsStore } from "./settings/store";
 import { createAppTheme } from "./theme";
 
 let root: ReturnType<typeof createRoot> | null = null;
+let unsubscribe: (() => void) | null = null;
 
 // ── Overlay root ───────────────────────────────────────────────
 // Wrapped in a ThemeProvider so the UI follows the map's dark mode.
@@ -45,8 +46,13 @@ const Overlay = () => {
   );
 };
 
-export const initOverlay = (): void => {
+export const initOverlay = (): (() => void) => {
   const container = document.getElementById("app-overlay")!;
+
+  // Tear down any previous overlay (e.g. hot reload or repeated init)
+  // so we don't leak subscriptions or roots.
+  unsubscribe?.();
+  root?.unmount();
 
   root = createRoot(container);
 
@@ -54,5 +60,12 @@ export const initOverlay = (): void => {
 
   // Re-render the overlay whenever the settings store changes so the
   // theme updates in response to the dark mode toggle.
-  settingsStore.subscribe(() => root?.render(<Overlay />));
+  unsubscribe = settingsStore.subscribe(() => root?.render(<Overlay />));
+
+  return () => {
+    unsubscribe?.();
+    unsubscribe = null;
+    root?.unmount();
+    root = null;
+  };
 };
