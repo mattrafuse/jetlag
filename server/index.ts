@@ -12,14 +12,14 @@ export function createApp() {
   /**
    * Accepts a Google Maps short URL and returns the lat/lng it resolves to.
    *
-   * Query params:
-   *   url - the maps.app.goo.gl (or other Google Maps) URL to resolve
+   * JSON body:
+   *   { "url": "https://maps.app.goo.gl/..." }
    */
-  app.get("/api/resolve", async (req, res) => {
-    const url = typeof req.query.url === "string" ? req.query.url : undefined;
+  app.post("/api/resolve", async (req, res) => {
+    const url = typeof req.body?.url === "string" ? req.body.url : undefined;
 
     if (!url) {
-      res.status(400).json({ error: "Missing required 'url' query parameter" });
+      res.status(400).json({ error: "Missing required 'url' in request body" });
       return;
     }
 

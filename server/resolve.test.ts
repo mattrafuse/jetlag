@@ -1,5 +1,5 @@
-import { describe, expect, it } from "vitest";
 import request from "supertest";
+import { describe, expect, it } from "vitest";
 import { createApp } from "./index.js";
 import { parseCoordinates, resolveGoogleMapsUrl } from "./resolve.js";
 
@@ -16,11 +16,11 @@ describe("parseCoordinates", () => {
   });
 });
 
-describe("GET /api/resolve (integration)", () => {
+describe("POST /api/resolve (integration)", () => {
   const app = createApp();
 
   it("resolves a real Google Maps short URL to lat/lng", async () => {
-    const res = await request(app).get("/api/resolve").query({ url: GOOGLE_MAPS_PIN });
+    const res = await request(app).post("/api/resolve").send({ url: GOOGLE_MAPS_PIN });
 
     expect(res.status).toBe(200);
     expect(res.body).toMatchObject({
@@ -31,8 +31,8 @@ describe("GET /api/resolve (integration)", () => {
     expect(res.body.url).toContain("google.com/maps");
   }, 30000);
 
-  it("returns 400 when the url parameter is missing", async () => {
-    const res = await request(app).get("/api/resolve");
+  it("returns 400 when the url is missing from the body", async () => {
+    const res = await request(app).post("/api/resolve").send({});
     expect(res.status).toBe(400);
     expect(res.body.error).toMatch(/url/i);
   });
