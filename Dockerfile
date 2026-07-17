@@ -17,19 +17,28 @@ RUN pnpm install --frozen-lockfile
 RUN pnpm build
 
 # ---- Runtime stage ----
-FROM node:alpine AS runtime
-WORKDIR /app
+# Lightweight nginx image serving the built static assets. The app sits behind
+# a separate nginx reverse proxy (see Dockerfile.nginx / nginx.conf), so a
+# basic static serve on port 3000 is all that's needed here.
+FROM nginx:alpine AS runtime
 
-RUN npm install -g pnpm@11
+# Replace the default nginx site config to listen on port 3000 and serve the
+# SPA with an index.html fallback for client-side routing.
+COPY <<'EOF' /etc/nginx/conf.d/default.conf
+server {
+    listen 3000;
+    server_name _;
 
-# Bring over the app manifest, dependencies, and built assets
-COPY --from=build /app/package.json ./package.json
-COPY --from=build /app/pnpm-lock.yaml ./pnpm-lock.yaml
-# Install only production dependencies for the runtime image
-RUN pnpm install --frozen-lockfile --prod
-COPY --from=build /app/dist ./dist
+    root /usr/share/nginx/html;
+    index index.html;
 
-# Serve the built vite web UI on port 3000
+    location / {
+        try_files $uri $uri/ /index.html;
+    }
+}
+EOF
+
+# Copy the built static assets into nginx's default serve directory
+COPY --from=build /app/dist /usr/share/nginx/html
+
 EXPOSE 3000
-
-CMD ["pnpm", "preview", "--host", "0.0.0.0", "--port", "3000"]
