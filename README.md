@@ -128,8 +128,9 @@ services:
 - **`server`** — runs the Express resolve API (`Dockerfile.server`). It reads
   `PORT` and `NODE_ENV` from the environment and is `expose`d on `3001`.
 - **`nginx`** — the only service with a `ports` mapping. It listens on `80`
-  inside the container and publishes that as `8080` on your host. It uses
-  `./nginx.conf` (mounted read-only) to route traffic:
+  inside the container and publishes that as `8080` on your host. It uses a
+  custom image (`Dockerfile.nginx`) with `nginx.conf` baked in, so no config
+  file needs to be bind-mounted or copied to the host. It routes traffic:
   - `location /api/` and `location = /health` → the `server` upstream
     (`server:3001`)
   - everything else (`location /`) → the `ui` upstream (`ui:3000`)
@@ -146,6 +147,7 @@ two images and point the compose file at them:
 ```bash
 docker build -f Dockerfile -t jetlag-ui .
 docker build -f Dockerfile.server -t jetlag-server .
+docker build -f Dockerfile.nginx -t jetlag-nginx .
 ```
 
 Then adjust the `image:` lines in `docker-compose.yml` (or add

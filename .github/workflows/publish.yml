@@ -76,3 +76,11 @@ jobs:
           file: ./Dockerfile.server
           push: true
           tags: ghcr.io/mattrafuse/jetlag-server:latest
+
+      - name: Build and push nginx image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./Dockerfile.nginx
+          push: true
+          tags: ghcr.io/mattrafuse/jetlag-nginx:latest

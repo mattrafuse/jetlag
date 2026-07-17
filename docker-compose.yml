@@ -15,12 +15,10 @@ services:
       - "3001"
 
   nginx:
-    image: nginx:alpine
+    image: ghcr.io/mattrafuse/jetlag-nginx:latest
     restart: unless-stopped
     depends_on:
       - ui
       - server
     ports:
       - "8080:80"
-    volumes:
-      - ./nginx.conf:/etc/nginx/nginx.conf:ro
