@@ -4,8 +4,7 @@
 FROM node:alpine AS build
 WORKDIR /app
 
-# Install pnpm (lockfile is v9.0)
-RUN npm install -g pnpm@9
+RUN npm install -g pnpm@11
 
 # Copy manifests first for better layer caching
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
@@ -14,18 +13,19 @@ COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY . .
 
 # Install dependencies (the server runs via --experimental-strip-types, so no
-# separate compile step is required).
-RUN pnpm install --frozen-lockfile
+# separate compile step is required). Only production deps are needed at runtime.
+RUN pnpm install --frozen-lockfile --prod
 
 # ---- Runtime stage ----
 FROM node:alpine AS runtime
 WORKDIR /app
 
-RUN npm install -g pnpm@9
+RUN npm install -g pnpm@11
 
 # Bring over the app manifest, dependencies, and server sources
 COPY --from=build /app/package.json ./package.json
 COPY --from=build /app/pnpm-lock.yaml ./pnpm-lock.yaml
+COPY --from=build /app/pnpm-workspace.yaml ./pnpm-workspace.yaml
 COPY --from=build /app/node_modules ./node_modules
 COPY --from=build /app/server ./server
 

@@ -26,6 +26,7 @@ export const addSubwayLayers = (map: L.Map, onReady?: () => void): L.LayerGroup 
   const routes = featureLayer({
     url: "https://gis.toronto.ca/arcgis/rest/services/cot_geospatial7/mapserver/11",
     isModern: true,
+    cacheLayers: true,
     style: (feature: Feature<LineString>) => {
       if (6 == feature.properties?.ROUTE_ID) {
         return { opacity: 0 };
@@ -47,6 +48,7 @@ export const addSubwayLayers = (map: L.Map, onReady?: () => void): L.LayerGroup 
       // Filter for Eglinton Line 5 stations specifically, and exclude westbound stations
       where: "(ARRIVAL_TIMES LIKE '%Line 5%') AND (STOP_NAME NOT LIKE '%Westbound%')",
       isModern: true,
+      cacheLayers: true,
       pointToLayer: (_feature, latlng) => {
         const ll = latlng as L.LatLng;
         const rawName = _feature.properties?.STOP_NAME ?? "";
@@ -75,6 +77,7 @@ export const addSubwayLayers = (map: L.Map, onReady?: () => void): L.LayerGroup 
   const stationsLayer = featureLayer({
     url: "https://gis.toronto.ca/arcgis/rest/services/cot_geospatial7/mapserver/8",
     isModern: true,
+    cacheLayers: true,
     pointToLayer: (feature, latlng) => {
       let closest: [number, Feature<LineString>] | null = null;
       routes.eachFeature((subwayLine) => {

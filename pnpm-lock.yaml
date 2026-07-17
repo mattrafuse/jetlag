@@ -23,12 +23,6 @@ importers:
       '@turf/turf':
         specifier: ^7.3.5
         version: 7.3.5
-      '@types/esri-leaflet':
-        specifier: ^3.0.4
-        version: 3.0.4
-      '@types/geojson':
-        specifier: ^7946.0.16
-        version: 7946.0.16
       esri-leaflet:
         specifier: ^3.0.19
         version: 3.0.19(leaflet@1.9.4)
@@ -44,15 +38,6 @@ importers:
       leaflet-editable:
         specifier: ^1.3.1
         version: 1.3.2
-      oxfmt:
-        specifier: ^0.58.0
-        version: 0.58.0
-      oxlint:
-        specifier: ^1.73.0
-        version: 1.73.0(oxlint-tsgolint@0.24.0)
-      oxlint-tsgolint:
-        specifier: ^0.24.0
-        version: 0.24.0
       react:
         specifier: ^19.2.7
         version: 19.2.7
@@ -72,9 +57,15 @@ importers:
       '@testing-library/react':
         specifier: ^16.3.2
         version: 16.3.2(@testing-library/dom@10.4.1)(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
+      '@types/esri-leaflet':
+        specifier: ^3.0.4
+        version: 3.0.4
       '@types/express':
         specifier: ^5.0.6
         version: 5.0.6
+      '@types/geojson':
+        specifier: ^7946.0.16
+        version: 7946.0.16
       '@types/leaflet':
         specifier: ^1.9.17
         version: 1.9.21
@@ -96,6 +87,15 @@ importers:
       jsdom:
         specifier: ^29.1.1
         version: 29.1.1(@noble/hashes@1.8.0)
+      oxfmt:
+        specifier: ^0.58.0
+        version: 0.58.0
+      oxlint:
+        specifier: ^1.73.0
+        version: 1.73.0(oxlint-tsgolint@0.24.0)
+      oxlint-tsgolint:
+        specifier: ^0.24.0
+        version: 0.24.0
       supertest:
         specifier: ^7.2.2
         version: 7.2.2

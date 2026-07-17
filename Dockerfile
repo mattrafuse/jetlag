@@ -4,7 +4,6 @@
 FROM node:alpine AS build
 WORKDIR /app
 
-# Install pnpm (lockfile is v9.0; workspace uses allowBuilds, a pnpm 10+ feature)
 RUN npm install -g pnpm@11
 
 # Copy manifests first for better layer caching
@@ -26,7 +25,8 @@ RUN npm install -g pnpm@11
 # Bring over the app manifest, dependencies, and built assets
 COPY --from=build /app/package.json ./package.json
 COPY --from=build /app/pnpm-lock.yaml ./pnpm-lock.yaml
-COPY --from=build /app/node_modules ./node_modules
+# Install only production dependencies for the runtime image
+RUN pnpm install --frozen-lockfile --prod
 COPY --from=build /app/dist ./dist
 
 # Serve the built vite web UI on port 3000
