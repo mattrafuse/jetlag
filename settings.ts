@@ -199,6 +199,6 @@ export const initSettings = (settings: {
   // Apply saved dark-mode class to the map container
   config.map.getContainer().classList.toggle("dark-mode", merged["chk-dark"] === true);
 
-  // Apply saved station-label visibility
+  // Apply saved label visibility
   stationRegistry.setLabelsVisible(merged["chk-labels"] !== false);
 };

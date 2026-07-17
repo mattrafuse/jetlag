@@ -22,6 +22,8 @@ export interface RadarControllerDependencies {
     update: (
       partial: Partial<{
         radarCenter: [number, number] | null;
+        radarLat: string;
+        radarLng: string;
       }>,
     ) => void;
     subscribe: (fn: () => void) => () => void;
@@ -34,6 +36,7 @@ export interface RadarController {
   startPicking: () => void;
   clearMarker: () => void;
   submit: (answer: "yes" | "no") => void;
+  setCenter: (lat: number, lng: number) => void;
   destroy: () => void;
 }
 
@@ -108,9 +111,38 @@ export const createRadarController = (deps: RadarControllerDependencies): RadarC
         }).addTo(map);
       }
       updateRadiusPreview();
-      store.update({ radarCenter: center });
+      store.update({
+        radarCenter: center,
+        radarLat: String(center[0]),
+        radarLng: String(center[1]),
+      });
     };
     map.on("click", clickHandler);
+  };
+
+  // ── Set center from lat/lng inputs ──────────────────────────
+  const setCenter = (lat: number, lng: number): void => {
+    center = [lat, lng];
+    const latlng = L.latLng(lat, lng);
+    if (centerMarker) {
+      centerMarker.setLatLng(latlng);
+    } else {
+      centerMarker = L.marker(latlng, {
+        icon: L.divIcon({
+          className: "questions-radar-marker",
+          html: `
+            <div class="questions-radar-bullseye">
+              <span class="ring ring-outer"></span>
+              <span class="ring ring-mid"></span>
+              <span class="ring ring-inner"></span>
+            </div>`,
+          iconSize: [36, 36],
+          iconAnchor: [18, 18],
+        }),
+      }).addTo(map);
+    }
+    updateRadiusPreview();
+    store.update({ radarCenter: center });
   };
 
   // ── Submission ──────────────────────────────────────────────
@@ -153,6 +185,7 @@ export const createRadarController = (deps: RadarControllerDependencies): RadarC
     startPicking,
     clearMarker,
     submit,
+    setCenter,
     destroy: clearMarker,
   };
 };

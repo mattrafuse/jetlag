@@ -1,6 +1,6 @@
 import * as turf from "@turf/turf";
 import L from "leaflet";
-import { QUARTER_MILE } from "../constants";
+import { EXCLUSION_RADIUS_FRACTION, QUARTER_MILE } from "../constants";
 import { findHub, HUBS, hubStationOptions } from "../layers/hubs";
 import { createStation } from "../layers/station";
 import type { RegisteredStation } from "./types";
@@ -32,6 +32,22 @@ class StationRegistry {
 
   setMap(map: L.Map): void {
     this.map = map;
+  }
+
+  // Listener invoked whenever the registry's station set changes (e.g. after
+  // async layers finish registering and mergeHubs runs). The React UI uses
+  // this to keep its station list in sync; without it, stations that arrive
+  // after the initial synchronous refresh (e.g. the TTC subway layer, which
+  // loads over the network) never appear in the sidebar until a question is
+  // resolved and forces a refresh.
+  private onChange: (() => void) | null = null;
+
+  setOnChange(fn: () => void): void {
+    this.onChange = fn;
+  }
+
+  private notifyChange(): void {
+    this.onChange?.();
   }
 
   register(
@@ -146,6 +162,13 @@ class StationRegistry {
     }
 
     this.hubMembers.clear();
+
+    // Async layers (e.g. the TTC subway featureLayer) register their stations
+    // and then call mergeHubs once their `load` event fires — after the
+    // initial synchronous refresh in initQuestions has already run. Notify the
+    // listener so the sidebar's station list picks up the newly arrived
+    // stations.
+    this.notifyChange();
   }
 
   getAll(): RegisteredStation[] {
@@ -162,7 +185,7 @@ class StationRegistry {
    */
   setLabelsVisible(visible: boolean): void {
     if (this.map) {
-      this.map.getContainer().classList.toggle("hide-station-labels", !visible);
+      this.map.getContainer().classList.toggle("hide-labels", !visible);
     }
   }
 
@@ -191,10 +214,33 @@ class StationRegistry {
    * invisible) is never re-added by esri, and esri never resets a FeatureGroup's
    * child styles, so the hidden state survives re-renders.
    */
+  /**
+   * (Re-)bind a station's permanent name label. The label is a Leaflet
+   * tooltip; unbinding it (rather than just hiding it via CSS) is what keeps
+   * it from re-appearing when esri-leaflet re-adds the marker on zoom/move —
+   * the binding lives on the marker object, so it survives re-renders.
+   */
+  private bindLabel(station: RegisteredStation): void {
+    station.marker.bindTooltip(station.name, {
+      permanent: true,
+      direction: "top",
+      className: "label",
+      offset: [0, -4],
+    });
+  }
+
   private setHidden(station: RegisteredStation, hidden: boolean): void {
     const o = hidden ? 0 : 1;
     station.marker.setStyle({ opacity: o, fillOpacity: o });
     station.circle.setStyle({ opacity: o, fillOpacity: hidden ? 0 : 0.25 });
+    // A permanent tooltip is a separate DOM element that is NOT affected by the
+    // marker's opacity, so an excluded station would still show its label.
+    // Unbind it (and re-bind on restore) so the label hides with the station.
+    if (hidden) {
+      station.marker.unbindTooltip();
+    } else {
+      this.bindLabel(station);
+    }
   }
 
   removeStation(id: string): void {
@@ -219,6 +265,8 @@ class StationRegistry {
     if (!station) return;
     station.marker.setStyle({ fillOpacity: 0.2, opacity: 0.2 });
     station.circle.setStyle({ fillOpacity: 0.05, opacity: 0.1 });
+    // Hide the permanent label too (see setHidden for why unbinding is used).
+    station.marker.unbindTooltip();
     station.grayed = true;
     this.grayedIds.add(id);
   }
@@ -229,6 +277,7 @@ class StationRegistry {
     if (!station) return;
     station.marker.setStyle({ fillOpacity: 1, opacity: 1 });
     station.circle.setStyle({ fillOpacity: 0.25, opacity: 1 });
+    this.bindLabel(station);
     station.grayed = false;
     this.grayedIds.delete(id);
   }
@@ -251,9 +300,15 @@ class StationRegistry {
   getStationIdsInExclusionZone(exclusionPolygon: GeoJSON.Feature<GeoJSON.Polygon>): string[] {
     const ids: string[] = [];
     for (const station of this.stations.values()) {
-      // Build a GeoJSON circle from the station's lat/lng and quarter-mile radius
+      // Build a GeoJSON circle from the station's lat/lng and quarter-mile radius.
+      // We shrink the radius by EXCLUSION_RADIUS_FRACTION so that stations near
+      // the game border — whose full quarter-mile circle spills outside the
+      // border-clipped exclusion polygon — are still correctly excluded.
       const center = turf.point([station.latlng.lng, station.latlng.lat]);
-      const circle = turf.circle(center, QUARTER_MILE / 1000, { units: "kilometers", steps: 32 });
+      const circle = turf.circle(center, (QUARTER_MILE / 1000) * EXCLUSION_RADIUS_FRACTION, {
+        units: "kilometers",
+        steps: 32,
+      });
 
       if (turf.booleanWithin(circle, exclusionPolygon)) {
         ids.push(station.id);

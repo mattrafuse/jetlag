@@ -15,6 +15,10 @@ export interface ThermometerControllerDependencies {
       partial: Partial<{
         thermoStart: [number, number] | null;
         thermoEnd: [number, number] | null;
+        thermoStartLat: string;
+        thermoStartLng: string;
+        thermoEndLat: string;
+        thermoEndLng: string;
       }>,
     ) => void;
   };
@@ -26,6 +30,8 @@ export interface ThermometerController {
   startPicking: () => void;
   clearMarkers: () => void;
   submit: (answer: "hotter" | "colder") => void;
+  setStart: (lat: number, lng: number) => void;
+  setEnd: (lat: number, lng: number) => void;
   destroy: () => void;
 }
 
@@ -37,8 +43,8 @@ export const createThermometerController = (
 
   let start: [number, number] | null = null;
   let end: [number, number] | null = null;
-  let startMarker: L.Marker | null = null;
-  let endMarker: L.Marker | null = null;
+  let startMarker: L.CircleMarker | null = null;
+  let endMarker: L.CircleMarker | null = null;
   let line: L.Polyline | null = null;
   let clickHandler: ((e: L.LeafletMouseEvent) => void) | null = null;
 
@@ -71,25 +77,35 @@ export const createThermometerController = (
     clickHandler = (e: L.LeafletMouseEvent) => {
       if (!start) {
         start = [e.latlng.lat, e.latlng.lng];
-        startMarker = L.marker(e.latlng, {
-          icon: L.divIcon({
-            className: "questions-thermo-marker",
-            html: '<div class="questions-thermo-marker-dot start">S</div>',
-            iconSize: [24, 24],
-            iconAnchor: [12, 12],
-          }),
+        startMarker = L.circleMarker(e.latlng, {
+          radius: 7,
+          color: "#3388ff",
+          fillColor: "#3388ff",
+          fillOpacity: 1,
+          weight: 2,
         }).addTo(map);
+        startMarker.bindTooltip("Thermometer Start", {
+          permanent: true,
+          direction: "top",
+          className: "label",
+          offset: [0, -4],
+        });
         store.update({ thermoStart: start });
       } else if (!end) {
         end = [e.latlng.lat, e.latlng.lng];
-        endMarker = L.marker(e.latlng, {
-          icon: L.divIcon({
-            className: "questions-thermo-marker",
-            html: '<div class="questions-thermo-marker-dot end">E</div>',
-            iconSize: [24, 24],
-            iconAnchor: [12, 12],
-          }),
+        endMarker = L.circleMarker(e.latlng, {
+          radius: 7,
+          color: "#ff3333",
+          fillColor: "#ff3333",
+          fillOpacity: 1,
+          weight: 2,
         }).addTo(map);
+        endMarker.bindTooltip("Thermometer End", {
+          permanent: true,
+          direction: "top",
+          className: "label",
+          offset: [0, -4],
+        });
         if (startMarker) {
           line = L.polyline([startMarker.getLatLng(), e.latlng], {
             color: "#3388ff",

@@ -31,5 +31,3 @@ export const gameBorder: GeoJSON.Feature<GeoJSON.Polygon> = (() => {
   // Use the first hole as the game area. (The Toronto border is a single ring.)
   return turf.polygon([rings[1] as number[][]]);
 })();
-
-

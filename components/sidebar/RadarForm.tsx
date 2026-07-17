@@ -86,7 +86,7 @@ export const RadarForm = () => {
           size="small"
           color="error"
           variant="outlined"
-          sx={{ alignSelf: "flex-start", textTransform: "none" }}
+          sx={{ textTransform: "none" }}
           onClick={handleReset}
         >
           Reset center
@@ -96,6 +96,7 @@ export const RadarForm = () => {
       {s.radarCenter && (
         <Box sx={{ display: "flex", gap: 1 }}>
           <Button
+            size="small"
             fullWidth
             variant="contained"
             color="success"
@@ -104,6 +105,7 @@ export const RadarForm = () => {
             Yes (in range)
           </Button>
           <Button
+            size="small"
             fullWidth
             variant="contained"
             color="error"

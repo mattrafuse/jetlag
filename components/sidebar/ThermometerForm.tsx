@@ -62,6 +62,7 @@ export const ThermometerForm = () => {
         <Button
           size="small"
           color="error"
+          variant="outlined"
           sx={{ alignSelf: "flex-start", textTransform: "none" }}
           onClick={handleReset}
         >
@@ -72,6 +73,7 @@ export const ThermometerForm = () => {
       {s.thermoStart && s.thermoEnd && (
         <Box sx={{ display: "flex", gap: 1 }}>
           <Button
+            size="small"
             fullWidth
             variant="contained"
             color="success"
@@ -80,6 +82,7 @@ export const ThermometerForm = () => {
             Hotter
           </Button>
           <Button
+            size="small"
             fullWidth
             variant="contained"
             color="error"

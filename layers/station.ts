@@ -62,7 +62,7 @@ export const createStation = (
     marker.bindTooltip(options.label, {
       permanent: true,
       direction: "top",
-      className: "station-label",
+      className: "label",
       offset: [0, -4],
     });
   }

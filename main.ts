@@ -5,11 +5,15 @@ import { addBorderMask } from "./layers/border";
 import { addUserLocation } from "./layers/location";
 import { addSubwayLayers } from "./layers/subway";
 import { addTrainLayers } from "./layers/train";
+import { initMapView } from "./map-view";
 import { initOverlay } from "./overlay";
 import { initQuestions, stationRegistry } from "./questions";
 import { initSettings } from "./settings";
 
 const map = L.map("map", { editable: true } as L.MapOptions).setView([43.6532, -79.3832], 12);
+
+// Restore the user's last-viewed position (center + zoom) from localStorage.
+initMapView(map);
 
 const tileLayer = L.tileLayer("https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png", {
   maxZoom: 19,

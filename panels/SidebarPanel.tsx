@@ -1,14 +1,14 @@
 import { Radar as RadarIcon, Thermostat as ThermoIcon } from "@mui/icons-material";
 import {
-    Box,
-    Checkbox,
-    Collapse,
-    Divider,
-    FormControlLabel,
-    Paper,
-    ToggleButton,
-    ToggleButtonGroup,
-    Typography,
+  Box,
+  Checkbox,
+  Collapse,
+  Divider,
+  FormControlLabel,
+  Paper,
+  ToggleButton,
+  ToggleButtonGroup,
+  Typography,
 } from "@mui/material";
 import React from "react";
 import { HistoryItem } from "../components/sidebar/HistoryItem";
@@ -38,6 +38,7 @@ export const SidebarPanel = () => {
           flexDirection: "column",
           overflow: "hidden",
           marginTop: "0 !important",
+          width: "400px",
         }}
       >
         {/* Header */}
@@ -80,7 +81,7 @@ export const SidebarPanel = () => {
             Question History
           </Typography>
         </Box>
-        <Box sx={{ flex: 1, overflow: "auto", px: 1, py: 0.5 }}>
+        <Box sx={{ flex: 1, overflow: "auto", px: 1.5, py: 1 }}>
           {s.history.length === 0 ? (
             <Typography
               variant="body2"
@@ -102,7 +103,7 @@ export const SidebarPanel = () => {
             Stations
           </Typography>
         </Box>
-        <Box sx={{ flex: 1, overflow: "auto", maxHeight: 200 }}>
+        <Box sx={{ flex: 1, overflow: "auto", maxHeight: 400 }}>
           <StationList />
         </Box>
 

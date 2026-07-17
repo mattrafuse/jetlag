@@ -11,6 +11,8 @@ export interface QuestionsState {
 
   // Radar
   radarCenter: [number, number] | null;
+  radarLat: string; // lat input field (auto-populated from clicks)
+  radarLng: string; // lng input field (auto-populated from clicks)
   radarDistance: number; // selected distance from dropdown
   radarCustomDistance: number; // custom input value
   radarUseCustom: boolean;
@@ -18,6 +20,10 @@ export interface QuestionsState {
   // Thermometer
   thermoStart: [number, number] | null;
   thermoEnd: [number, number] | null;
+  thermoStartLat: string; // lat input field (auto-populated from clicks)
+  thermoStartLng: string; // lng input field (auto-populated from clicks)
+  thermoEndLat: string; // lat input field (auto-populated from clicks)
+  thermoEndLng: string; // lng input field (auto-populated from clicks)
   thermoDistance: number;
 
   // History
@@ -29,12 +35,18 @@ export interface QuestionsState {
   // Settings
   showRemoved: boolean;
 }
+Lat: "",
+  radarLng: "",
+  radarDistance: 5,
+  radarCustomDistance: 0,
+  radarUseCustom: false,
 
-const initialState: QuestionsState = {
-  panelOpen: false,
-  activeTab: "radar",
-
-  radarCenter: null,
+  thermoStart: null,
+  thermoEnd: null,
+  thermoStartLat: "",
+  thermoStartLng: "",
+  thermoEndLat: "",
+  thermoEndLng: ""ll,
   radarDistance: 5,
   radarCustomDistance: 0,
   radarUseCustom: false,
@@ -82,6 +94,9 @@ export interface SidebarCallbacks {
   clearThermoMarkers: () => void;
   startRadarPicking: () => void;
   startThermoPicking: () => void;
+  setRadarCenter: (lat: number, lng: number) => void;
+  setThermoStart: (lat: number, lng: number) => void;
+  setThermoEnd: (lat: number, lng: number) => void;
   setShowRemoved: (v: boolean) => void;
 }
 
@@ -93,5 +108,8 @@ export const callbacks: SidebarCallbacks = {
   clearThermoMarkers: () => {},
   startRadarPicking: () => {},
   startThermoPicking: () => {},
+  setRadarCenter: () => {},
+  setThermoStart: () => {},
+  setThermoEnd: () => {},
   setShowRemoved: () => {},
 };

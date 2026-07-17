@@ -178,4 +178,13 @@ export const initQuestions = (config: QuestionsConfig): void => {
   applyStationFilter();
   renderHistory();
   radarController.startPicking();
+
+  // Keep the sidebar's station list in sync with the registry AND re-apply the
+  // exclusion filter. Async layers (e.g. the TTC subway featureLayer) register
+  // their stations and call mergeHubs after their `load` event fires — which is
+  // after the synchronous applyStationFilter() above has already run. Without
+  // re-filtering here, those late-arriving stations would show up even if they
+  // fall inside an exclusion zone. applyStationFilter() ends by refreshing the
+  // station statuses, so the list stays in sync too.
+  stationRegistry.setOnChange(applyStationFilter);
 };
