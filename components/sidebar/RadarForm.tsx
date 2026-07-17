@@ -3,6 +3,27 @@ import { callbacks, radarQuestions, store } from "../../questions";
 import { useStore } from "./useStore";
 import { usedRadarDistances } from "./usedDistances";
 
+// ── Coordinate input helper ────────────────────────────────────
+const CoordField = ({
+  label,
+  value,
+  onChange,
+}: {
+  label: string;
+  value: string;
+  onChange: (val: string) => void;
+}) => (
+  <TextField
+    size="small"
+    type="number"
+    fullWidth
+    placeholder={label}
+    slotProps={{ htmlInput: { step: 0.0001 } }}
+    value={value}
+    onChange={(e) => onChange(e.target.value)}
+  />
+);
+
 // ── Radar Form ─────────────────────────────────────────────────
 export const RadarForm = () => {
   const s = useStore();
@@ -33,6 +54,22 @@ export const RadarForm = () => {
   const handleReset = () => {
     callbacks.clearRadarMarker();
     callbacks.startRadarPicking();
+  };
+
+  const handleLatChange = (val: string) => {
+    store.update({ radarLat: val });
+    const lat = Number(val);
+    const lng = Number(s.radarLng);
+    if (!val || Number.isNaN(lat) || Number.isNaN(lng)) return;
+    callbacks.setRadarCenter(lat, lng);
+  };
+
+  const handleLngChange = (val: string) => {
+    store.update({ radarLng: val });
+    const lat = Number(s.radarLat);
+    const lng = Number(val);
+    if (!val || Number.isNaN(lat) || Number.isNaN(lng)) return;
+    callbacks.setRadarCenter(lat, lng);
   };
 
   const statusText = s.radarCenter
@@ -80,6 +117,11 @@ export const RadarForm = () => {
           {statusText}
         </Typography>
       </Paper>
+
+      <Box sx={{ display: "flex", gap: 1 }}>
+        <CoordField label="Lat" value={s.radarLat} onChange={handleLatChange} />
+        <CoordField label="Lng" value={s.radarLng} onChange={handleLngChange} />
+      </Box>
 
       {s.radarCenter && (
         <Button

@@ -154,6 +154,9 @@ export const initQuestions = (config: QuestionsConfig): void => {
   callbacks.startThermoPicking = () => thermoController?.startPicking();
   callbacks.clearRadarMarker = () => radarController?.clearMarker();
   callbacks.clearThermoMarkers = () => thermoController?.clearMarkers();
+  callbacks.setRadarCenter = (lat, lng) => radarController?.setCenter(lat, lng);
+  callbacks.setThermoStart = (lat, lng) => thermoController?.setStart(lat, lng);
+  callbacks.setThermoEnd = (lat, lng) => thermoController?.setEnd(lat, lng);
   callbacks.setShowRemoved = (v: boolean) => {
     showRemovedStations = v;
     store.update({ showRemoved: v });

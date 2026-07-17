@@ -4,6 +4,7 @@
 // creates and composes this controller; it never imports radar code.
 
 import L from "leaflet";
+import { roundCoord } from "../store";
 import { thermometerQuestions } from "./data";
 import type { AskedThermometerQuestion } from "./types";
 
@@ -68,7 +69,14 @@ export const createThermometerController = (
       map.off("click", clickHandler);
       clickHandler = null;
     }
-    store.update({ thermoStart: null, thermoEnd: null });
+    store.update({
+      thermoStart: null,
+      thermoEnd: null,
+      thermoStartLat: "",
+      thermoStartLng: "",
+      thermoEndLat: "",
+      thermoEndLng: "",
+    });
   };
 
   // ── Picking ─────────────────────────────────────────────────
@@ -90,7 +98,11 @@ export const createThermometerController = (
           className: "label",
           offset: [0, -4],
         });
-        store.update({ thermoStart: start });
+        store.update({
+          thermoStart: start,
+          thermoStartLat: String(roundCoord(start[0])),
+          thermoStartLng: String(roundCoord(start[1])),
+        });
       } else if (!end) {
         end = [e.latlng.lat, e.latlng.lng];
         endMarker = L.circleMarker(e.latlng, {
@@ -113,7 +125,11 @@ export const createThermometerController = (
             dashArray: "5, 5",
           }).addTo(map);
         }
-        store.update({ thermoEnd: end });
+        store.update({
+          thermoEnd: end,
+          thermoEndLat: String(roundCoord(end[0])),
+          thermoEndLng: String(roundCoord(end[1])),
+        });
         // Stop listening after both points are placed.
         const h = clickHandler;
         if (h) {
@@ -123,6 +139,76 @@ export const createThermometerController = (
       }
     };
     map.on("click", clickHandler);
+  };
+
+  // ── Set start from lat/lng inputs ───────────────────────────
+  const setStart = (lat: number, lng: number): void => {
+    start = [lat, lng];
+    const latlng = L.latLng(lat, lng);
+    if (startMarker) {
+      startMarker.setLatLng(latlng);
+    } else {
+      startMarker = L.circleMarker(latlng, {
+        radius: 7,
+        color: "#3388ff",
+        fillColor: "#3388ff",
+        fillOpacity: 1,
+        weight: 2,
+      }).addTo(map);
+      startMarker.bindTooltip("Thermometer Start", {
+        permanent: true,
+        direction: "top",
+        className: "label",
+        offset: [0, -4],
+      });
+    }
+    if (endMarker) {
+      if (line) {
+        map.removeLayer(line);
+        line = null;
+      }
+      line = L.polyline([startMarker.getLatLng(), endMarker.getLatLng()], {
+        color: "#3388ff",
+        weight: 2,
+        dashArray: "5, 5",
+      }).addTo(map);
+    }
+    store.update({ thermoStart: start });
+  };
+
+  // ── Set end from lat/lng inputs ─────────────────────────────
+  const setEnd = (lat: number, lng: number): void => {
+    end = [lat, lng];
+    const latlng = L.latLng(lat, lng);
+    if (endMarker) {
+      endMarker.setLatLng(latlng);
+    } else {
+      endMarker = L.circleMarker(latlng, {
+        radius: 7,
+        color: "#ff3333",
+        fillColor: "#ff3333",
+        fillOpacity: 1,
+        weight: 2,
+      }).addTo(map);
+      endMarker.bindTooltip("Thermometer End", {
+        permanent: true,
+        direction: "top",
+        className: "label",
+        offset: [0, -4],
+      });
+    }
+    if (startMarker) {
+      if (line) {
+        map.removeLayer(line);
+        line = null;
+      }
+      line = L.polyline([startMarker.getLatLng(), endMarker.getLatLng()], {
+        color: "#3388ff",
+        weight: 2,
+        dashArray: "5, 5",
+      }).addTo(map);
+    }
+    store.update({ thermoEnd: end });
   };
 
   // ── Submission ──────────────────────────────────────────────
@@ -151,6 +237,8 @@ export const createThermometerController = (
     startPicking,
     clearMarkers,
     submit,
+    setStart,
+    setEnd,
     destroy: clearMarkers,
   };
 };

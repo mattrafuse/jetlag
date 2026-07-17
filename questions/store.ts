@@ -1,5 +1,10 @@
 import type { AskedQuestion } from "./types";
 
+// ── Coordinate precision ───────────────────────────────────────
+// 6 decimal places ≈ 0.11 m at the equator — more than enough for
+// placing game markers, while keeping the input fields tidy.
+export const roundCoord = (v: number): number => Math.round(v * 1e6) / 1e6;
+
 // ── Simple reactive store shared between React UI and sidebar logic ───
 // This store is shared across both question types. Per-type fields
 // (radarCenter, thermoStart, etc.) live here so the UI can subscribe
@@ -35,7 +40,13 @@ export interface QuestionsState {
   // Settings
   showRemoved: boolean;
 }
-Lat: "",
+
+const initialState: QuestionsState = {
+  panelOpen: false,
+  activeTab: "radar",
+
+  radarCenter: null,
+  radarLat: "",
   radarLng: "",
   radarDistance: 5,
   radarCustomDistance: 0,
@@ -46,13 +57,7 @@ Lat: "",
   thermoStartLat: "",
   thermoStartLng: "",
   thermoEndLat: "",
-  thermoEndLng: ""ll,
-  radarDistance: 5,
-  radarCustomDistance: 0,
-  radarUseCustom: false,
-
-  thermoStart: null,
-  thermoEnd: null,
+  thermoEndLng: "",
   thermoDistance: 0.5,
 
   history: [],

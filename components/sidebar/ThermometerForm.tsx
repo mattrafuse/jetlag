@@ -1,7 +1,28 @@
-import { Box, Button, MenuItem, Paper, Select, Typography } from "@mui/material";
+import { Box, Button, MenuItem, Paper, Select, TextField, Typography } from "@mui/material";
 import { callbacks, store, thermometerQuestions } from "../../questions";
 import { useStore } from "./useStore";
 import { usedThermometerDistances } from "./usedDistances";
+
+// ── Coordinate input helper ────────────────────────────────────
+const CoordField = ({
+  label,
+  value,
+  onChange,
+}: {
+  label: string;
+  value: string;
+  onChange: (val: string) => void;
+}) => (
+  <TextField
+    size="small"
+    type="number"
+    fullWidth
+    placeholder={label}
+    slotProps={{ htmlInput: { step: 0.0001 } }}
+    value={value}
+    onChange={(e) => onChange(e.target.value)}
+  />
+);
 
 // ── Thermometer Form ───────────────────────────────────────────
 export const ThermometerForm = () => {
@@ -20,6 +41,38 @@ export const ThermometerForm = () => {
   const handleReset = () => {
     callbacks.clearThermoMarkers();
     callbacks.startThermoPicking();
+  };
+
+  const handleStartLatChange = (val: string) => {
+    store.update({ thermoStartLat: val });
+    const lat = Number(val);
+    const lng = Number(s.thermoStartLng);
+    if (!val || Number.isNaN(lat) || Number.isNaN(lng)) return;
+    callbacks.setThermoStart(lat, lng);
+  };
+
+  const handleStartLngChange = (val: string) => {
+    store.update({ thermoStartLng: val });
+    const lat = Number(s.thermoStartLat);
+    const lng = Number(val);
+    if (!val || Number.isNaN(lat) || Number.isNaN(lng)) return;
+    callbacks.setThermoStart(lat, lng);
+  };
+
+  const handleEndLatChange = (val: string) => {
+    store.update({ thermoEndLat: val });
+    const lat = Number(val);
+    const lng = Number(s.thermoEndLng);
+    if (!val || Number.isNaN(lat) || Number.isNaN(lng)) return;
+    callbacks.setThermoEnd(lat, lng);
+  };
+
+  const handleEndLngChange = (val: string) => {
+    store.update({ thermoEndLng: val });
+    const lat = Number(s.thermoEndLat);
+    const lng = Number(val);
+    if (!val || Number.isNaN(lat) || Number.isNaN(lng)) return;
+    callbacks.setThermoEnd(lat, lng);
   };
 
   const statusText = s.thermoStart
@@ -57,6 +110,23 @@ export const ThermometerForm = () => {
           {statusText}
         </Typography>
       </Paper>
+
+      <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+        <Typography variant="caption" color="text.secondary">
+          Start
+        </Typography>
+        <Box sx={{ display: "flex", gap: 1 }}>
+          <CoordField label="Lat" value={s.thermoStartLat} onChange={handleStartLatChange} />
+          <CoordField label="Lng" value={s.thermoStartLng} onChange={handleStartLngChange} />
+        </Box>
+        <Typography variant="caption" color="text.secondary">
+          End
+        </Typography>
+        <Box sx={{ display: "flex", gap: 1 }}>
+          <CoordField label="Lat" value={s.thermoEndLat} onChange={handleEndLatChange} />
+          <CoordField label="Lng" value={s.thermoEndLng} onChange={handleEndLngChange} />
+        </Box>
+      </Box>
 
       {(s.thermoStart || s.thermoEnd) && (
         <Button

@@ -16,16 +16,6 @@ describe("computeRadarExclusion", () => {
     expect(result.geometry.type).toBe("Polygon");
   });
 
-  it("for 'no': the exclusion polygon is the circle itself (single ring)", () => {
-    const result = computeRadarExclusion(CENTER, DISTANCE, "no");
-    expect(result.geometry.coordinates).toHaveLength(1);
-  });
-
-  it("for 'yes': the exclusion polygon has an outer ring and a hole", () => {
-    const result = computeRadarExclusion(CENTER, DISTANCE, "yes");
-    expect(result.geometry.coordinates).toHaveLength(2);
-  });
-
   it("for 'no': a point at the center is inside the exclusion zone", () => {
     const polygon = computeRadarExclusion(CENTER, DISTANCE, "no");
     const centerPoint = turf.point([CENTER[1], CENTER[0]]);

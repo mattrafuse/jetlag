@@ -4,6 +4,7 @@
 // composes this controller; it never imports thermometer code.
 
 import L from "leaflet";
+import { roundCoord } from "../store";
 import { radarQuestions } from "./data";
 import type { AskedRadarQuestion } from "./types";
 
@@ -83,7 +84,7 @@ export const createRadarController = (deps: RadarControllerDependencies): RadarC
       radiusPreview = null;
     }
     center = null;
-    store.update({ radarCenter: null });
+    store.update({ radarCenter: null, radarLat: "", radarLng: "" });
   };
 
   // ── Picking ─────────────────────────────────────────────────
@@ -113,8 +114,8 @@ export const createRadarController = (deps: RadarControllerDependencies): RadarC
       updateRadiusPreview();
       store.update({
         radarCenter: center,
-        radarLat: String(center[0]),
-        radarLng: String(center[1]),
+        radarLat: String(roundCoord(center[0])),
+        radarLng: String(roundCoord(center[1])),
       });
     };
     map.on("click", clickHandler);
