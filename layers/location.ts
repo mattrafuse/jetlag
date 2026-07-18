@@ -37,7 +37,9 @@ export const onLocationAvailabilityChange = (cb: (available: boolean) => void): 
 const availabilityCallbacks: ((available: boolean) => void)[] = [];
 
 const setLocationAvailable = (available: boolean): void => {
-  if (locationAvailable === available) return;
+  if (locationAvailable === available) {
+    return;
+  }
   locationAvailable = available;
   for (const cb of availabilityCallbacks) cb(available);
 };
@@ -88,7 +90,9 @@ export const addUserLocation = (map: L.Map): L.LayerGroup => {
 
     // Use the smoothed (averaged) position for the marker.
     const smoothed = averagePosition();
-    if (!smoothed) return;
+    if (!smoothed) {
+      return;
+    }
     lastLatLng = smoothed;
     setLocationAvailable(true);
 
@@ -132,7 +136,9 @@ export const addUserLocation = (map: L.Map): L.LayerGroup => {
 // ── Focus the map on the user's location ──────────────────────
 // Pans/zooms to the last known location, or re-queries if unknown.
 export const focusUserLocation = (): void => {
-  if (!mapRef) return;
+  if (!mapRef) {
+    return;
+  }
 
   if (lastLatLng) {
     mapRef.setView(lastLatLng, Math.max(mapRef.getZoom(), 16), { animate: true });

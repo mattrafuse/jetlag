@@ -40,7 +40,7 @@ export const SettingsPanel = () => {
             display: "flex",
             flexDirection: "column",
 
-            p: 2,
+            p: 1,
             marginTop: "0 !important",
           },
         ]}

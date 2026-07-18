@@ -202,10 +202,14 @@ export const createThermometerController = (
 
   // ── Submission ──────────────────────────────────────────────
   const submit = (answer: "hotter" | "colder"): void => {
-    if (!start || !end) return;
+    if (!start || !end) {
+      return;
+    }
     const s = store.get();
     const selected = thermometerQuestions.find((q) => q.distance === s.thermoDistance);
-    if (!selected) return;
+    if (!selected) {
+      return;
+    }
 
     const question: AskedThermometerQuestion = {
       id: nextId(),

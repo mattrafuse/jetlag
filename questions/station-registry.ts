@@ -245,7 +245,9 @@ class StationRegistry {
 
   removeStation(id: string): void {
     const station = this.stations.get(id);
-    if (!station || station.removed) return;
+    if (!station || station.removed) {
+      return;
+    }
     this.setHidden(station, true);
     station.removed = true;
     this.removedIds.add(id);
@@ -253,7 +255,9 @@ class StationRegistry {
 
   restoreStation(id: string): void {
     const station = this.stations.get(id);
-    if (!station || !station.removed) return;
+    if (!station || !station.removed) {
+      return;
+    }
     this.setHidden(station, false);
     station.removed = false;
     this.removedIds.delete(id);
@@ -262,7 +266,9 @@ class StationRegistry {
   /** Gray out a station (reduce opacity) without removing it. */
   grayOutStation(id: string): void {
     const station = this.stations.get(id);
-    if (!station) return;
+    if (!station) {
+      return;
+    }
     station.marker.setStyle({ fillOpacity: 0.2, opacity: 0.2 });
     station.circle.setStyle({ fillOpacity: 0.05, opacity: 0.1 });
     // Hide the permanent label too (see setHidden for why unbinding is used).
@@ -274,7 +280,9 @@ class StationRegistry {
   /** Restore a grayed-out station to full opacity. */
   unGrayStation(id: string): void {
     const station = this.stations.get(id);
-    if (!station) return;
+    if (!station) {
+      return;
+    }
     station.marker.setStyle({ fillOpacity: 1, opacity: 1 });
     station.circle.setStyle({ fillOpacity: 0.25, opacity: 1 });
     this.bindLabel(station);

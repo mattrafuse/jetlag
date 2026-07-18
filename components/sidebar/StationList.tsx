@@ -28,7 +28,7 @@ export const StationList = () => {
       ) : (
         <>
           <Stack
-            sx={{ pt: 1, alignItems: "center", justifyContent: "space-between" }}
+            sx={{ alignItems: "center", justifyContent: "space-between" }}
             direction="row"
             spacing={1}
           >
@@ -40,51 +40,45 @@ export const StationList = () => {
               {s.stations.filter((st) => !st.excluded).length} / {s.stations.length} Remaining
             </Typography>
           </Stack>
-          <Box
+          <Stack
+            spacing={0.5}
             sx={
               isSmall ? { flexGrow: 1, py: 1 } : { flex: 1, overflow: "auto", maxHeight: "300px" }
             }
           >
-            <Box sx={{ py: 0.5 }}>
-              {s.stations.map((st) => (
-                <Box
-                  key={st.id}
+            {s.stations.map((st) => (
+              <Box
+                key={st.id}
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 1,
+                }}
+              >
+                {st.excluded ? (
+                  <CheckedIcon fontSize="small" sx={{ color: "success.main", flexShrink: 0 }} />
+                ) : (
+                  <UncheckedIcon fontSize="small" sx={{ color: "text.disabled", flexShrink: 0 }} />
+                )}
+                <Typography
+                  variant="caption"
                   sx={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 1,
-                    py: 0.25,
-                    px: 1,
+                    textDecoration: st.excluded ? "line-through" : "none",
+                    color: st.excluded ? "text.disabled" : "text.primary",
                   }}
                 >
-                  {st.excluded ? (
-                    <CheckedIcon fontSize="small" sx={{ color: "success.main", flexShrink: 0 }} />
-                  ) : (
-                    <UncheckedIcon
-                      fontSize="small"
-                      sx={{ color: "text.disabled", flexShrink: 0 }}
-                    />
-                  )}
-                  <Typography
-                    variant="caption"
-                    sx={{
-                      textDecoration: st.excluded ? "line-through" : "none",
-                      color: st.excluded ? "text.disabled" : "text.primary",
-                    }}
-                  >
-                    {st.name}
-                  </Typography>
-                </Box>
-              ))}
-            </Box>
-          </Box>
+                  {st.name}
+                </Typography>
+              </Box>
+            ))}
+          </Stack>
 
           <Divider />
         </>
       )}
 
       {/* Settings */}
-      <Box sx={{ py: 1 }}>
+      <Box>
         <FormControlLabel
           control={
             <Checkbox

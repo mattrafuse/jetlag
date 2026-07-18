@@ -49,7 +49,9 @@ export const ThermometerForm = () => {
     questionsStore.update({ thermoStartLat: val });
     const lat = Number(val);
     const lng = Number(s.thermoStartLng);
-    if (!val || Number.isNaN(lat) || Number.isNaN(lng)) return;
+    if (!val || Number.isNaN(lat) || Number.isNaN(lng)) {
+      return;
+    }
     questionsCallbacks.setThermoStart(lat, lng);
   };
 
@@ -57,7 +59,9 @@ export const ThermometerForm = () => {
     questionsStore.update({ thermoStartLng: val });
     const lat = Number(s.thermoStartLat);
     const lng = Number(val);
-    if (!val || Number.isNaN(lat) || Number.isNaN(lng)) return;
+    if (!val || Number.isNaN(lat) || Number.isNaN(lng)) {
+      return;
+    }
     questionsCallbacks.setThermoStart(lat, lng);
   };
 
@@ -65,7 +69,9 @@ export const ThermometerForm = () => {
     questionsStore.update({ thermoEndLat: val });
     const lat = Number(val);
     const lng = Number(s.thermoEndLng);
-    if (!val || Number.isNaN(lat) || Number.isNaN(lng)) return;
+    if (!val || Number.isNaN(lat) || Number.isNaN(lng)) {
+      return;
+    }
     questionsCallbacks.setThermoEnd(lat, lng);
   };
 
@@ -73,7 +79,9 @@ export const ThermometerForm = () => {
     questionsStore.update({ thermoEndLng: val });
     const lat = Number(s.thermoEndLat);
     const lng = Number(val);
-    if (!val || Number.isNaN(lat) || Number.isNaN(lng)) return;
+    if (!val || Number.isNaN(lat) || Number.isNaN(lng)) {
+      return;
+    }
     questionsCallbacks.setThermoEnd(lat, lng);
   };
 

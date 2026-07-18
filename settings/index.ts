@@ -69,7 +69,9 @@ const toggleLayer = (
   };
 
   const layer = layerMap[id];
-  if (!layer) return;
+  if (!layer) {
+    return;
+  }
 
   if (checked) {
     config.map.addLayer(layer);

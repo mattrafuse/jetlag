@@ -109,13 +109,17 @@ export const createPolygonController = (deps: PolygonControllerDependencies): Po
 
   // ── Finish drawing (programmatic commit) ───────────────────
   const finishDrawing = (): void => {
-    if (!currentLayer || !store.get().polygonDrawing) return;
+    if (!currentLayer || !store.get().polygonDrawing) {
+      return;
+    }
     map.editTools.commitDrawing(undefined as unknown as L.LeafletMouseEvent);
   };
 
   // ── Submission ─────────────────────────────────────────────
   const submit = (answer: "yes" | "no"): void => {
-    if (!currentLayer || !store.get().polygonDrawn) return;
+    if (!currentLayer || !store.get().polygonDrawn) {
+      return;
+    }
 
     const latlngs = currentLayer.getLatLngs() as L.LatLng[][];
     const rings: [number, number][][] = latlngs.map((ring) => {

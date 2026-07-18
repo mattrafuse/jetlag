@@ -18,7 +18,9 @@ export const GoogleMapsUrlField = ({ label, onResolved }: GoogleMapsUrlFieldProp
 
   const handleResolve = async () => {
     const trimmed = url.trim();
-    if (!trimmed || loading) return;
+    if (!trimmed || loading) {
+      return;
+    }
     setLoading(true);
     setError(null);
     try {

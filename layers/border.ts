@@ -31,7 +31,9 @@ export const addBorderMask = (map: L.Map): L.LayerGroup => {
 
 // ── Edit / export helpers ──────────────────────────────────────
 export const setBorderEditable = (editable: boolean): void => {
-  if (!borderMask) return;
+  if (!borderMask) {
+    return;
+  }
   if (editable) {
     borderMask.enableEdit();
   } else {
@@ -40,7 +42,9 @@ export const setBorderEditable = (editable: boolean): void => {
 };
 
 export const exportBorderGeoJSON = (): void => {
-  if (!borderMask) return;
+  if (!borderMask) {
+    return;
+  }
   const geojson = borderMask.toGeoJSON() as GeoJSON.Feature;
   const blob = new Blob([JSON.stringify(geojson, null, 2)], {
     type: "application/geo+json",

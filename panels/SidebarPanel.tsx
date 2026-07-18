@@ -8,6 +8,7 @@ import {
   Collapse,
   Divider,
   Paper,
+  Stack,
   ToggleButton,
   ToggleButtonGroup,
   Typography,
@@ -50,26 +51,23 @@ export const SidebarPanel = () => {
             display: "flex",
             flexDirection: "column",
 
-            p: 2,
+            p: 1,
             marginTop: "0 !important",
           },
         ]}
       >
-        {/* Header */}
-        <Box sx={{ pt: 2, pb: 1 }}>
-          <Typography variant="h6" sx={{ fontWeight: 600 }}>
+        <Stack spacing={1}>
+          <Typography variant="h6" sx={{ fontWeight: 600, pt: 1, pb: 1 }}>
             Ask a Question
           </Typography>
-        </Box>
 
-        {/* Tab Toggle */}
-        <Box sx={{ pb: 1 }}>
           <ToggleButtonGroup
             value={s.activeTab}
             exclusive
             onChange={handleTabChange}
             size="small"
             fullWidth
+            sx={{ pb: 1 }}
           >
             <ToggleButton value="radar">
               <RadarIcon fontSize="small" sx={{ mr: 0.5 }} />
@@ -84,10 +82,8 @@ export const SidebarPanel = () => {
               Polygon
             </ToggleButton>
           </ToggleButtonGroup>
-        </Box>
 
-        {/* Form Area */}
-        <Box sx={{ pb: 1 }}>
+          {/* Form Area */}
           {s.activeTab === "radar" ? (
             <RadarForm />
           ) : s.activeTab === "polygon" ? (
@@ -95,27 +91,27 @@ export const SidebarPanel = () => {
           ) : (
             <ThermometerForm />
           )}
-        </Box>
 
-        <Divider />
+          <Divider />
 
-        {/* History */}
-        <Typography variant="subtitle2" sx={{ fontWeight: 600, pt: 1 }} color="text.secondary">
-          Question History
-        </Typography>
-        <Box sx={[!isSmall && { flex: 1, overflow: "auto", py: 1 }]}>
-          {s.history.length === 0 ? (
-            <Typography variant="body2" color="text.disabled" sx={{ fontStyle: "italic", py: 1 }}>
-              No questions asked yet
-            </Typography>
-          ) : (
-            [...s.history].reverse().map((q) => <HistoryItem key={q.id} question={q} />)
-          )}
-        </Box>
+          {/* History */}
+          <Typography variant="subtitle2" sx={{ fontWeight: 600 }} color="text.secondary">
+            Question History
+          </Typography>
+          <Box sx={[!isSmall && { flex: 1, overflow: "auto" }]}>
+            {s.history.length === 0 ? (
+              <Typography variant="body2" color="text.disabled" sx={{ fontStyle: "italic" }}>
+                No questions asked yet
+              </Typography>
+            ) : (
+              [...s.history].reverse().map((q) => <HistoryItem key={q.id} question={q} />)
+            )}
+          </Box>
 
-        <Divider />
+          <Divider />
 
-        <StationList />
+          <StationList />
+        </Stack>
       </Paper>
     </Collapse>
   );

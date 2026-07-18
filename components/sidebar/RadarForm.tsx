@@ -61,7 +61,9 @@ export const RadarForm = () => {
     questionsStore.update({ radarLat: val });
     const lat = Number(val);
     const lng = Number(s.radarLng);
-    if (!val || Number.isNaN(lat) || Number.isNaN(lng)) return;
+    if (!val || Number.isNaN(lat) || Number.isNaN(lng)) {
+      return;
+    }
     questionsCallbacks.setRadarCenter(lat, lng);
   };
 
@@ -69,13 +71,20 @@ export const RadarForm = () => {
     questionsStore.update({ radarLng: val });
     const lat = Number(s.radarLat);
     const lng = Number(val);
-    if (!val || Number.isNaN(lat) || Number.isNaN(lng)) return;
+    if (!val || Number.isNaN(lat) || Number.isNaN(lng)) {
+      return;
+    }
     questionsCallbacks.setRadarCenter(lat, lng);
   };
 
-  const statusText = s.radarCenter
-    ? "Center set. Choose answer:"
-    : "Click the map to set the radar center, or paste a Google Maps URL.";
+  const selectedDistance = s.radarUseCustom ? s.radarCustomDistance : s.radarDistance;
+  const selectedUsed = used.has(selectedDistance);
+
+  const statusText = selectedUsed
+    ? "This radius has already been used. Change the radius to place another radar."
+    : s.radarCenter
+      ? "Center set. Choose answer:"
+      : "Click the map to set the radar center, or paste a Google Maps URL.";
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
@@ -146,6 +155,7 @@ export const RadarForm = () => {
             fullWidth
             variant="contained"
             color="success"
+            disabled={used.has(s.radarUseCustom ? s.radarCustomDistance : s.radarDistance)}
             onClick={() => questionsCallbacks.submitRadar("yes")}
           >
             Yes (in range)
@@ -155,6 +165,7 @@ export const RadarForm = () => {
             fullWidth
             variant="contained"
             color="error"
+            disabled={used.has(s.radarUseCustom ? s.radarCustomDistance : s.radarDistance)}
             onClick={() => questionsCallbacks.submitRadar("no")}
           >
             No (out of range)

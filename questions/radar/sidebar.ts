@@ -34,9 +34,23 @@ export const createRadarController = (deps: RadarControllerDependencies): RadarC
   let radiusPreview: L.Circle | null = null;
   let clickHandler: ((e: L.LeafletMouseEvent) => void) | null = null;
 
+  // True when the currently selected radius has already been used in a
+  // resolved radar question. In that case we must not let the user place or
+  // submit another radar of the same type until the radius changes.
+  const selectedDistanceUsed = (): boolean => {
+    const s = store.get();
+    const distance =
+      s.radarUseCustom && !Number.isNaN(s.radarCustomDistance) && s.radarCustomDistance > 0
+        ? s.radarCustomDistance
+        : s.radarDistance;
+    return s.history.some((q) => q.type === "radar" && q.distance === distance);
+  };
+
   // ── Radius preview ──────────────────────────────────────────
   const updateRadiusPreview = (): void => {
-    if (!center) return;
+    if (!center) {
+      return;
+    }
     const s = store.get();
     const distance =
       s.radarUseCustom && !Number.isNaN(s.radarCustomDistance) && s.radarCustomDistance > 0
@@ -76,7 +90,12 @@ export const createRadarController = (deps: RadarControllerDependencies): RadarC
     clearMarker();
     clickHandler = (e: L.LeafletMouseEvent) => {
       const s = store.get();
-      if (!s.panelOpen || s.activeTab !== "radar") return;
+      if (!s.panelOpen || s.activeTab !== "radar") {
+        return;
+      }
+      if (selectedDistanceUsed()) {
+        return;
+      }
       center = [e.latlng.lat, e.latlng.lng];
       if (centerMarker) {
         centerMarker.setLatLng(e.latlng);
@@ -132,7 +151,9 @@ export const createRadarController = (deps: RadarControllerDependencies): RadarC
 
   // ── Submission ──────────────────────────────────────────────
   const submit = (answer: "yes" | "no"): void => {
-    if (!center) return;
+    if (!center || selectedDistanceUsed()) {
+      return;
+    }
     const s = store.get();
     let distance: number;
     let label: string;
@@ -142,7 +163,10 @@ export const createRadarController = (deps: RadarControllerDependencies): RadarC
       label = `${s.radarCustomDistance} Mile${s.radarCustomDistance === 1 ? "" : "s"}`;
     } else {
       const selected = radarQuestions.find((q) => q.distance === s.radarDistance);
-      if (!selected) return;
+      if (!selected) {
+        return;
+      }
+
       distance = selected.distance;
       label = selected.label;
     }
