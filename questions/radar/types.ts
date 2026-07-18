@@ -21,4 +21,8 @@ export interface AskedRadarQuestion {
   center: [number, number];
   answer: "yes" | "no";
   timestamp: number;
+  /** Number of stations removed by this question when it was asked. */
+  removedCount?: number;
+  /** Percentage of remaining stations removed by this question when asked. */
+  removedPercent?: number;
 }

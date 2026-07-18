@@ -311,6 +311,21 @@ class StationRegistry {
   }
 
   /**
+   * Returns the set of IDs for every station currently excluded (removed or
+   * grayed out) by the question system. Used to measure how many stations a
+   * newly asked question removes relative to the previously excluded set.
+   */
+  getExcludedStationIds(): Set<string> {
+    const ids = new Set<string>();
+    for (const station of this.stations.values()) {
+      if (station.removed || station.grayed) {
+        ids.add(station.id);
+      }
+    }
+    return ids;
+  }
+
+  /**
    * Returns IDs of stations whose entire quarter-mile radius circle
    * is fully contained within the given exclusion polygon.
    */

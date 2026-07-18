@@ -42,9 +42,7 @@ export const StationList = () => {
           </Stack>
           <Stack
             spacing={0.5}
-            sx={
-              isSmall ? { flexGrow: 1, py: 1 } : { flex: 1, overflow: "auto", maxHeight: "300px" }
-            }
+            sx={isSmall ? { flexGrow: 1, py: 1 } : { flex: 1, overflow: "auto", maxHeight: "25vh" }}
           >
             {s.stations.map((st) => (
               <Box

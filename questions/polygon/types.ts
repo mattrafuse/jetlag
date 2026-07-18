@@ -13,4 +13,8 @@ export interface AskedPolygonQuestion {
   /** Whether the hider is inside (no) or outside (yes) the polygon. */
   answer: "yes" | "no";
   timestamp: number;
+  /** Number of stations removed by this question when it was asked. */
+  removedCount?: number;
+  /** Percentage of remaining stations removed by this question when asked. */
+  removedPercent?: number;
 }

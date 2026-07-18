@@ -115,8 +115,17 @@ export const ThermometerForm = () => {
         ))}
       </Select>
 
-      <Paper variant="outlined" sx={{ p: 1, bgcolor: "action.hover" }}>
-        <Typography variant="body2" color="text.secondary">
+      <Paper
+        variant="outlined"
+        sx={{
+          p: 0.25,
+          bgcolor: "action.hover",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
+        <Typography variant="caption" color="text.secondary">
           {statusText}
         </Typography>
       </Paper>

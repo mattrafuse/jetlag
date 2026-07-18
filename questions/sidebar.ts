@@ -97,10 +97,28 @@ const computeExclusionPolygon = (question: AskedQuestion): GeoJSON.Feature<GeoJS
 };
 
 const processQuestion = (question: AskedQuestion): void => {
+  // Capture the set of stations excluded BEFORE this question is applied, so
+  // we can measure how many it newly removes relative to the prior state.
+  const beforeExcluded = stationRegistry.getExcludedStationIds();
+
   const polygon = computeExclusionPolygon(question);
   exclusionZones.push({ polygon, sourceQuestion: question });
   updateExclusionLayer();
   applyStationFilter();
+
+  // Measure the stations removed by THIS question (those excluded now that
+  // were not excluded before) and what fraction of the remaining stations
+  // that represents.
+  const afterExcluded = stationRegistry.getExcludedStationIds();
+  const newlyRemoved = [...afterExcluded].filter((id) => !beforeExcluded.has(id)).length;
+  const remaining = stationRegistry.getActive().length;
+  const removedPercent =
+    remaining + newlyRemoved > 0 ? (newlyRemoved / (remaining + newlyRemoved)) * 100 : 0;
+
+  console.log(newlyRemoved, removedPercent);
+
+  question.removedCount = newlyRemoved;
+  question.removedPercent = removedPercent;
 };
 
 const removeQuestion = (id: string): void => {
@@ -134,20 +152,20 @@ const switchTab = (tab: "radar" | "thermometer" | "polygon"): void => {
 
 // ── Question-asked callbacks (passed to controllers) ────────────
 const onRadarQuestionAsked = (question: AskedRadarQuestion): void => {
-  saveHistory([...loadHistory(), question]);
   processQuestion(question);
+  saveHistory([...loadHistory(), question]);
   renderHistory();
 };
 
 const onThermoQuestionAsked = (question: AskedThermometerQuestion): void => {
-  saveHistory([...loadHistory(), question]);
   processQuestion(question);
+  saveHistory([...loadHistory(), question]);
   renderHistory();
 };
 
 const onPolygonQuestionAsked = (question: AskedPolygonQuestion): void => {
-  saveHistory([...loadHistory(), question]);
   processQuestion(question);
+  saveHistory([...loadHistory(), question]);
   renderHistory();
 };
 

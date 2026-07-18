@@ -25,4 +25,8 @@ export interface AskedThermometerQuestion {
   end: [number, number];
   answer: "hotter" | "colder";
   timestamp: number;
+  /** Number of stations removed by this question when it was asked. */
+  removedCount?: number;
+  /** Percentage of remaining stations removed by this question when asked. */
+  removedPercent?: number;
 }

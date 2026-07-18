@@ -43,6 +43,8 @@ export const HistoryItem = ({ question }: { question: AskedQuestion }) => {
     window.dispatchEvent(new CustomEvent("jetlag-remove-question", { detail: question.id }));
   };
 
+  console.log(question.removedCount, question.removedPercent);
+
   return (
     <Box
       sx={{
@@ -81,6 +83,13 @@ export const HistoryItem = ({ question }: { question: AskedQuestion }) => {
       </Box>
 
       <Box sx={{ mt: 0.5 }}>
+        {question.removedCount && question.removedPercent ? (
+          <Typography variant="caption" color="text.secondary" component="div">
+            <strong>Removed:</strong> {question.removedCount} station
+            {question.removedCount === 1 ? "" : "s"} ({question.removedPercent.toFixed(1)}% of
+            remaining)
+          </Typography>
+        ) : null}
         {isRadar ? (
           <Typography variant="caption" color="text.secondary" component="div">
             <strong>Center:</strong> {coordLabel(question.center[0], question.center[1])}
