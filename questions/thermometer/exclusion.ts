@@ -6,12 +6,12 @@ import { clipToGameBorder } from "../exclusion";
 import { gameBorder } from "../game-border";
 
 /**
- * Degrees of latitude/longitude to extend the half-plane polygon beyond the
+ * Kilometres to extend the half-plane polygon beyond the
  * midpoint. The polygon is clipped to the game border afterwards, so this
  * just needs to be large enough that the half-plane fully covers the game
  * area on the excluded side.
  */
-const EXTENT = 90;
+const EXTENT = 100;
 
 /**
  * Compute the exclusion polygon for a thermometer question.
@@ -30,7 +30,7 @@ export const computeThermometerExclusion = (
 ): GeoJSON.Feature<GeoJSON.Polygon> => {
   // Reuse the bisector geometry; its endpoints span the game region and form
   // the base edge of the half-plane quad we build below.
-  const bisector = computeThermometerBisector(start, end);
+  const bisector = computeThermometerBisector(start, end, false);
   if (!bisector) {
     // Start and end are the same — return degenerate polygon
     return turf.polygon([
@@ -43,56 +43,55 @@ export const computeThermometerExclusion = (
     ]);
   }
 
-  // Convert to [lng, lat] for turf
+  const excludedPoint = answer === "hotter" ? start : end;
+  const excludedLngLat: [number, number] = [excludedPoint[1], excludedPoint[0]];
+
+  // Endpoints of the bisector segment that spans the game region.
+  const bisectorCoords = bisector.geometry.coordinates;
+  const lineCoords: [number, number][] =
+    bisector.geometry.type === "LineString"
+      ? (bisectorCoords as [number, number][])
+      : (bisectorCoords as [number, number][][]).flat(1);
+  if (lineCoords.length < 2) {
+    return turf.polygon([
+      [
+        [0, 0],
+        [0, 0],
+        [0, 0],
+        [0, 0],
+      ],
+    ]);
+  }
+  const p1 = lineCoords[0];
+  const p2 = lineCoords[lineCoords.length - 1];
+
+  // Direction from the bisector toward the excluded half-plane. The bisector
+  // is perpendicular to AB, so this direction is parallel to AB and points
+  // from the midpoint toward the excluded point.
   const A: [number, number] = [start[1], start[0]];
   const B: [number, number] = [end[1], end[0]];
+  const midpoint = turf.midpoint(turf.point(A), turf.point(B));
+  const midCoord = midpoint.geometry.coordinates as [number, number];
+  // Use rhumb bearing so the extension follows a straight line on the
+  // Web Mercator map (matching how the bisector is now computed). Great-circle
+  // bearings would bow the extension toward the poles and skew the quad.
+  const bearing = turf.rhumbBearing(turf.point(midCoord), turf.point(excludedLngLat));
 
-  // Direction vector of AB
-  const dx = B[0] - A[0];
-  const dy = B[1] - A[1];
+  // Extend both bisector endpoints into the excluded side to form the
+  // half-plane quad [p1, p2, far2, far1, p1]. Rhumb destinations keep the
+  // edges straight on a Mercator projection.
+  const far1 = turf.rhumbDestination(turf.point(p1), EXTENT, bearing, {
+    units: "kilometers",
+  });
+  const far2 = turf.rhumbDestination(turf.point(p2), EXTENT, bearing, {
+    units: "kilometers",
+  });
+  const far1Coord = far1.geometry.coordinates as [number, number];
+  const far2Coord = far2.geometry.coordinates as [number, number];
 
-  const len = Math.sqrt(dx * dx + dy * dy);
+  const quad = turf.polygon([[p1, p2, far2Coord, far1Coord, p1]]);
 
-  // Midpoint of AB — the bisector passes through here, perpendicular to AB.
-  const midLng = (A[0] + B[0]) / 2;
-  const midLat = (A[1] + B[1]) / 2;
-
-  // Base edge of the half-plane quad: the bisector endpoints (clipped to the
-  // game region). Extending these by EXTENT along AB below covers the excluded
-  // half-plane; the final clipToGameBorder keeps it within the playable area.
-  const bisectorCoords =
-    bisector.geometry.type === "LineString"
-      ? bisector.geometry.coordinates
-      : bisector.geometry.coordinates[0];
-  const p1: [number, number] = [bisectorCoords[0][0], bisectorCoords[0][1]];
-  const p2: [number, number] = [
-    bisectorCoords[bisectorCoords.length - 1][0],
-    bisectorCoords[bisectorCoords.length - 1][1],
-  ];
-
-  // Determine which side of the bisector to exclude.
-  // Projecting a point onto the AB direction (measured from the midpoint)
-  // tells us which half-plane it lies in: negative = A side, positive = B side.
-  const sideOfBisector = (px: number, py: number): number =>
-    dx * (px - midLng) + dy * (py - midLat);
-
-  // For "hotter": exclude the side containing START (A).
-  // For "colder": exclude the side containing END (B).
-  const pointToExclude = answer === "hotter" ? A : B;
-  const sign = sideOfBisector(pointToExclude[0], pointToExclude[1]) >= 0 ? 1 : -1;
-
-  // Direction toward the excluded side is perpendicular to the bisector
-  // (i.e. along AB). `sign` flips it toward A or B as needed.
-  const sideDx = (dx / len) * sign;
-  const sideDy = (dy / len) * sign;
-
-  // Build a large quad covering the excluded half-plane, then clip to the
-  // game border so the polygon stays within the playable area.
-  const far1: [number, number] = [p1[0] + sideDx * EXTENT, p1[1] + sideDy * EXTENT];
-  const far2: [number, number] = [p2[0] + sideDx * EXTENT, p2[1] + sideDy * EXTENT];
-
-  const halfPlane = turf.polygon([[p1, p2, far2, far1, p1]]);
-  return clipToGameBorder(halfPlane);
+  return clipToGameBorder(quad);
 };
 
 /**
@@ -108,44 +107,50 @@ export const computeThermometerExclusion = (
 export const computeThermometerBisector = (
   start: [number, number], // [lat, lng]
   end: [number, number], // [lat, lng]
+  clamp: boolean = true,
 ): GeoJSON.Feature<GeoJSON.LineString | GeoJSON.MultiLineString> | null => {
   // Convert to [lng, lat] for turf
   const A: [number, number] = [start[1], start[0]];
   const B: [number, number] = [end[1], end[0]];
+  // 1. Find the center point where the bisector starts
+  const midpoint = turf.midpoint(turf.point(A), turf.point(B));
 
-  const dx = B[0] - A[0];
-  const dy = B[1] - A[1];
-  const len = Math.sqrt(dx * dx + dy * dy);
-  if (len === 0) {
-    return null;
+  // 2. Calculate the original bearing and add 90 degrees for the perpendicular angle.
+  // Use rhumb bearing so the bisector is a straight line on a Web Mercator
+  // map (which is what Leaflet renders). Great-circle bearings would bow the
+  // two endpoints toward the poles, tilting the bisector and shifting it
+  // off the true midpoint — most visibly for roughly east-west segments.
+  const originalBearing = turf.rhumbBearing(turf.point(A), turf.point(B));
+  const perpendicularBearing = originalBearing + 90;
+
+  // 3. Project two points far away in opposite directions.
+  // Use a distance large enough to safely clear your maximum game board size (e.g., 1000 km)
+  const p1 = turf.rhumbDestination(midpoint, EXTENT, perpendicularBearing, {
+    units: "kilometers",
+  });
+  const p2 = turf.rhumbDestination(midpoint, EXTENT, perpendicularBearing + 180, {
+    units: "kilometers",
+  });
+
+  // This is your massive, extended bisector line
+  const extendedBisector = turf.lineString([p1.geometry.coordinates, p2.geometry.coordinates]);
+
+  if (!clamp) {
+    return extendedBisector;
   }
 
-  // Midpoint of AB — the bisector passes through here, perpendicular to AB.
-  const midLng = (A[0] + B[0]) / 2;
-  const midLat = (A[1] + B[1]) / 2;
-
-  // Perpendicular direction (rotate AB 90° CCW), normalized.
-  const perpDx = -dy / len;
-  const perpDy = dx / len;
-
-  // Two points on the bisector, extended far enough to cover the map.
-  const p1: [number, number] = [midLng + perpDx * EXTENT, midLat + perpDy * EXTENT];
-  const p2: [number, number] = [midLng - perpDx * EXTENT, midLat - perpDy * EXTENT];
-
-  const bisector = turf.lineString([p1, p2]);
   try {
-    // The bisector passes through the midpoint, which lies inside the game
-    // area (both endpoints are placed within the border). Clip it to the
-    // game region by finding where it crosses the border boundary and keeping
-    // the segment between those two crossings.
-    const crossings = turf.lineIntersect(bisector, gameBorder);
+    // 4. Clip it to the game boundary
+    const crossings = turf.lineIntersect(extendedBisector, gameBorder);
     const coords = crossings.features.map((f) => f.geometry.coordinates);
+
     if (coords.length >= 2) {
-      const clipped = turf.lineString([coords[0], coords[coords.length - 1]]);
-      return clipped;
+      // Return the segment clamped precisely to the border boundaries
+      return turf.lineString([coords[0], coords[coords.length - 1]]);
     }
   } catch {
-    // fall through to return the raw bisector
+    // Fall through to return the extended bisector if intersection fails
   }
-  return bisector;
+
+  return extendedBisector;
 };
