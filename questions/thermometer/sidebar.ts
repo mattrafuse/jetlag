@@ -7,6 +7,7 @@ import L from "leaflet";
 import type { QuestionsStoreType } from "../store";
 import { roundCoord } from "../store";
 import { thermometerQuestions } from "./data";
+import { computeThermometerBisector } from "./exclusion";
 import type { AskedThermometerQuestion } from "./types";
 
 export interface ThermometerControllerDependencies {
@@ -36,6 +37,7 @@ export const createThermometerController = (
   let startMarker: L.CircleMarker | null = null;
   let endMarker: L.CircleMarker | null = null;
   let line: L.Polyline | null = null;
+  let bisectorLayer: L.GeoJSON | null = null;
   let clickHandler: ((e: L.LeafletMouseEvent) => void) | null = null;
 
   // ── Marker cleanup ──────────────────────────────────────────
@@ -51,6 +53,10 @@ export const createThermometerController = (
     if (line) {
       map.removeLayer(line);
       line = null;
+    }
+    if (bisectorLayer) {
+      map.removeLayer(bisectorLayer);
+      bisectorLayer = null;
     }
     start = null;
     end = null;
@@ -141,6 +147,24 @@ export const createThermometerController = (
       weight: 2,
       dashArray: "5, 5",
     }).addTo(map);
+    placeBisector();
+  };
+
+  // Render the perpendicular bisector across the game region so the user can
+  // visualize where the thermometer exclusion will land. No-op if either
+  // marker is missing.
+  const placeBisector = (): void => {
+    if (!start || !end) return;
+    if (bisectorLayer) {
+      map.removeLayer(bisectorLayer);
+      bisectorLayer = null;
+    }
+    const bisector = computeThermometerBisector(start, end);
+    if (bisector) {
+      bisectorLayer = L.geoJSON(bisector, {
+        style: { color: "#ffaa00", weight: 2, dashArray: "4, 4", opacity: 0.9 },
+      }).addTo(map);
+    }
   };
 
   // ── Set start from lat/lng inputs ───────────────────────────

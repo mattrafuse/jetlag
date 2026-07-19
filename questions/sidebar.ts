@@ -115,8 +115,6 @@ const processQuestion = (question: AskedQuestion): void => {
   const removedPercent =
     remaining + newlyRemoved > 0 ? (newlyRemoved / (remaining + newlyRemoved)) * 100 : 0;
 
-  console.log(newlyRemoved, removedPercent);
-
   question.removedCount = newlyRemoved;
   question.removedPercent = removedPercent;
 };

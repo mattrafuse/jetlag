@@ -16,6 +16,8 @@ import { useQuestionsStore } from "./useQuestionsStore";
 import { usedThermometerDistances } from "./usedDistances";
 import { validateCoordinates } from "./coordUtils";
 import capitalize from "lodash-es/capitalize";
+import reverse from "lodash-es/reverse";
+import clone from "lodash-es/clone";
 
 // ── Coordinate input helper ────────────────────────────────────
 const CoordField = ({
@@ -94,7 +96,9 @@ export const ThermometerForm = () => {
   // it satisfies the minimum travel distance for the chosen thermometer.
   const travelDistance =
     s.thermoStart && s.thermoEnd
-      ? turf.distance(s.thermoStart, s.thermoEnd, { units: "miles" })
+      ? turf.distance(reverse(clone(s.thermoStart)), reverse(clone(s.thermoEnd)), {
+          units: "miles",
+        })
       : null;
   const distanceValid = travelDistance !== null && travelDistance >= s.thermoDistance;
 
